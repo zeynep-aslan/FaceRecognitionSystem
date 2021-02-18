@@ -118,11 +118,6 @@ def run():
 
             elif root.winfo_exists():
                 cap = cv2.VideoCapture(0)
-                # answer = messagebox.askretrycancel("Camera disconnect", "Do you want to try that again?")
-                # if answer:
-                #     cap = cv2.VideoCapture(0)
-                # else:
-                #     quit_()
             root.protocol("WM_DELETE_WINDOW", destroy_)
             if root.winfo_exists():
                 root.update()
@@ -138,16 +133,6 @@ def destroy_():
     quit_()
     return None
 def keyboard(keyboard_lbl, keyboard_entry):
-    # b0.configure(command=lambda: entry2.insert(tk.END, "0"))
-    # b1.configure(command=lambda: entry2.insert(tk.END, "1"))
-    # b2.configure(command=lambda: entry2.insert(tk.END, "2"))
-    # b3.configure(command=lambda: entry2.insert(tk.END, "3"))
-    # b4.configure(command=lambda: entry2.insert(tk.END, "4"))
-    # b5.configure(command=lambda: entry2.insert(tk.END, "5"))
-    # b6.configure(command=lambda: entry2.insert(tk.END, "6"))
-    # b7.configure(command=lambda: entry2.insert(tk.END, "7"))
-    # b8.configure(command=lambda: entry2.insert(tk.END, "8"))
-    # b9.configure(command=lambda: entry2.insert(tk.END, "9"))
 
     buttoncolor_char = "#107dac"
     buttoncolor_num = "#4cd137"
@@ -636,7 +621,6 @@ def add_user():
 
 def delete_user():
     pass
-
 
 def password_register():
     
