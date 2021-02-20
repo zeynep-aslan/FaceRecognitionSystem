@@ -13,7 +13,7 @@ import os
 import shutil
 from collections import OrderedDict
 
-known_face_encondings = []
+known_face_encondings = []  # globali burda tanimlamayi dene
 known_face_names = []
 Ids = []
 image_path = "known_faces"
@@ -321,205 +321,141 @@ def keyboard(keyboard_lbl, keyboard_entry):
     b2_12.grid(row=2, column=12)
 
 def add_user():
-    
-    def activateEntryName(lbl, entry):
-        # global account_entry_passw
-        # global account_entry_name
-        account_entry_passw.configure(state=DISABLED)
-        account_entry_name.configure(state=NORMAL)
-        keyboard(lbl, entry)
-    def btn_account_add_clicker(event):
-        global value1
-        # global account_entry_name
-        # global account_entry_passw
-        global value_name
 
-        global account_name_warning_lbl
-        global isCorrect
+    def delete_char_add_user():
+        entry_passw_add_user.delete(len(entry_passw_add_user.get()) - 1, END)
+        entry_name_add_user.delete(len(entry_name_add_user.get()) - 1, END)
+    def add_userr():
 
-        # global keyboard_lbl
-        # global account_entry_passw
+        # global known_face_encondings  #######
+        # var_name = var_name_add_user.get()
+        number_of_img = 3
+        list_int = map(int, Ids)
+        list_int = list(list_int)
+        list_int = sorted(list_int)
+        try:
+            biggest_id = list_int[-1]
+        except:
+            biggest_id = 0
 
-        global known_face_encondings
-        global known_face_names
-        global Ids
-        global frame
-        global top, right, bottom, left
-        global name
-        global face_locations
-        global check
-        global new_rgb_frame
-        global frame_copy
+        for i in range(biggest_id+1):
+            if str(i) not in Ids:
+                latest = i
+                break
+            if i == biggest_id:
+                latest = i + 1         
+        print("55")
+        faces = []
+        check = True
+        for i in range(number_of_img):
+            print("66")
+            warning_lbl_add_user.config(text="3")
+            time.sleep(1)
+            warning_lbl_add_user.config(text="2")
+            time.sleep(1)
+            warning_lbl_add_user.config(text="1")
+            time.sleep(1)
+            face_img = frame[top: bottom, left: right]
+            print("88")
+            try:
+                img_encoding = fr.face_encodings(face_img)[0]
+                faces.append(img_encoding)
+                # print(Ids)
+                try:
+                    os.mkdir(f"{image_path}/{latest}")
+                except:
+                    pass   
+                # print(Ids) 
+                path = f"{image_path}/{latest}/{entry_name_add_user.get()}-{i}.jpeg"
+                cv2.imwrite(path, face_img)
+            except Exception as e:
+                # print(f"yuz bulunamadi!!, aldigim error: {e}\n")
+                warning_lbl_add_user.config(text=f"yuz bulunamadi!!aldigim error: {e}")
+        check = False
+        if len(faces) > 0:
+            try:
+                known_face_encondings += faces  # local variable 'known_face_encondings' referenced before assignment
+                # known_face_encondings.append(faces)
+                Ids.append(str(latest))
+                for i in faces:
+                    known_face_names.append(entry_name_add_user.get())
+                warning_lbl_add_user.config(text=f"kullanici basariyla eklendi, id bilgisi: {latest}")
 
+                entry_passw_add_user.configure(state=NORMAL)
+                entry_passw_add_user.delete(0, END)
+                entry_name_add_user.delete(0, END)
+                entry_name_add_user.configure(state=DISABLED)
+                keyboard(keyboard_lbl_add_user, entry_passw_add_user)
+
+            except Exception as e:
+                print(e)
+                warning_lbl_add_user.config(text=f"yuz bilgileri eklenemedi!!! aldigim error: {e}")
+        else:        
+            warning_lbl_add_user.config(text="yuz bilgileri eklenemedi!!")
+    def activateEntryName():
+        entry_passw_add_user.configure(state=DISABLED)
+        entry_name_add_user.configure(state=NORMAL)
+        btn_add_user.configure(text="Enter")
+        warning_lbl_add_user.configure(text="",bg=bgg)  
+        keyboard(keyboard_lbl_add_user, entry_name_add_user)
+    def control_password_add_user(*args):
+
+        btn_add_user.configure(text="Enter")
+        warning_lbl_add_user.configure(text="",bg=bgg)   
+        password_add_user = var_password_add_user.get()
+        statee="normal"
+        if len(password_add_user) < 4:
+            statee=DISABLED
+        if len(password_add_user) > 11:
+            var_password_add_user.set(password_add_user[:12])
+        btn_add_user.config(state=statee)
+    def control_name_add_user(*args):
+
+        btn_add_user.configure(text="Kaydet")
+        var_name = var_name_add_user.get()
+        print(known_face_names)
+        textt=""
+        statee=NORMAL
+        if len(face_locations) > 1:
+            textt="kameranin karsisinda birden fazla kisi bulunmamalidir"
+            statee=DISABLED
+        elif name in known_face_names:
+            textt="kayitli kullaniciyi bir daha ekleyemezsiniz!"
+            statee=DISABLED
+        elif " " in var_name:
+            textt="isimde bosluk bulunmamalidir"
+            statee=DISABLED
+        elif any(char.isdigit() for char in var_name):
+            textt="isimde sayi bulunmamalidir"
+            statee=DISABLED
+        warning_lbl_name_add_user.config(text=textt)
+        btn_add_user.config(state=statee)
+    def btn_add_user_clicker(event):
+        
         parser = ConfigParser()
         file = "config.ini"
         parser.read(file)
         password = parser.get("account", "password")
-        print(len(account_entry_name.get()))
-        print("00")
-        if not isCorrect:
-            print("11")
-            account_entry_name.delete(0, END)
-            account_entry_passw.delete(0, END)
-            account_warning_lbl.config(text="Lutfen uyarılara uygun veri girişi yapın!!!", state="normal")
-            account_warning_lbl.grid(column=0, row=6, sticky="nsew")
-            print("22")
-        print("33")
-        if value1 != password:
-            account_warning_lbl.config(text="Hatalı şifre!!!")
-            account_warning_lbl.grid(column=0, row=6, sticky="nsew")
-            account_entry_passw.delete(0, END)
-            account_entry_name.delete(0, END)
-            account_btn_add.config(state="normal")
-            account_btn_add.grid(column=2, row=0, sticky="nsew")
-        else:
-            if len(account_entry_name.get())==0 and isCorrect:
-                activateEntryName(keyboard_lbl, account_entry_name)  # bunun icindeki keyboard() i ayri verebilirim
-            else:
-                print("44")
-                list_int = map(int, Ids)
-                list_int = list(list_int)
-                list_int = sorted(list_int)
-                try:
-                    biggest_id = list_int[-1]
-                except:
-                    biggest_id = 0
-
-                for i in range(biggest_id+1):
-                    if str(i) not in Ids:
-                        latest = i
-                        break
-                    if i == biggest_id:
-                        latest = i + 1         
-                print("55")
-                number_of_img = 3
-                faces = []
-                check = True
-                for i in range(number_of_img):
-                    print("66")
-                    account_warning_lbl.config(text="3")
-                    account_warning_lbl.grid(column=0, row=6, sticky="nsew")
-                    time.sleep(1)
-                    account_warning_lbl.config(text="2")
-                    account_warning_lbl.grid(column=0, row=6, sticky="nsew")
-                    time.sleep(1)
-                    account_warning_lbl.config(text="1")
-                    account_warning_lbl.grid(column=0, row=6, sticky="nsew")
-                    time.sleep(1)
-                    # new_rgb_frame = new_rgb_frame[:, :, ::-1]
-                    face_img = frame[top: bottom, left: right]
-                    print("88")
-                    try:
-                        img_encoding = fr.face_encodings(face_img)[0]
-                        faces.append(img_encoding)
-                        # print(Ids)
-                        try:
-                            os.mkdir(f"{image_path}/{latest}")
-                        except:
-                            pass   
-                        # print(Ids) 
-                        path = f"{image_path}/{latest}/{value_name}-{i}.jpeg"
-                        cv2.imwrite(path, face_img)
-                    except Exception as e:
-                        # print(f"yuz bulunamadi!!, aldigim error: {e}\n")
-                        account_warning_lbl.config(text=f"yuz bulunamadi!!, aldigim error: {e}")
-                        account_warning_lbl.grid(column=0, row=6, sticky="nsew")
-                check = False
-                if len(faces) > 0:
-                    try:
-                        known_face_encondings += faces
-                        Ids.append(str(latest))
-                        for i in faces:
-                            known_face_names.append(value_name)
-                        account_warning_lbl.config(text=f"kullanici basariyla eklendi! id bilgisi: {latest}")
-                        account_warning_lbl.grid(column=0, row=6, sticky="nsew")
-                        
-
-                    except Exception as e:
-                        account_warning_lbl.config(text=f"yuz bilgileri eklenemedi!, aldigim error: {e}")
-                        account_warning_lbl.grid(column=0, row=6, sticky="nsew")
-                else:        
-                    account_warning_lbl.config(text="yuz bilgileri eklenemedi!!")
-                    account_warning_lbl.grid(column=0, row=6, sticky="nsew")   
-    def delete_char():
-        account_entry_name.delete(len(account_entry_name.get()) - 1, END)
-        account_entry_passw.delete(len(account_entry_passw.get()) - 1, END)
-    def control_name(*args):
-        global account_name_warning_lbl
-        global face_locations
-        global value_name
-        global name
-        global account_btn_add
-        global isCorrect
-        global account_warning_lbl 
-
-        value_name = entry_name.get()
-        print(known_face_names)
-        if len(face_locations) > 1:
-            account_name_warning_lbl.config(text="kameranin karsisinda birden fazla kisi bulunmamalidir")
-            account_name_warning_lbl.grid(column=0, row=5, sticky="n")
-            account_btn_add.config(state=DISABLED)  # new
-            account_btn_add.grid(column=2, row=0, sticky="nsew")
-            isCorrect = False
-        elif name in known_face_names:
-            account_name_warning_lbl.config(text="kayitli kullaniciyi bir daha ekleyemezsiniz!")
-            account_name_warning_lbl.grid(column=0, row=5, sticky="n")
-            account_btn_add.config(state=DISABLED)
-            account_btn_add.grid(column=2, row=0, sticky="nsew")
-            isCorrect = False
-        elif " " in value_name:
-            account_name_warning_lbl.config(text="isimde bosluk bulunmamalidir")
-            account_name_warning_lbl.grid(column=0, row=5, sticky="n") 
-            account_btn_add.config(state=DISABLED)
-            account_btn_add.grid(column=2, row=0, sticky="nsew")
-            isCorrect = False
-        elif any(char.isdigit() for char in value_name):  # add special character condition
-            account_name_warning_lbl.config(text="isimde sayi bulunmamalidir")
-            account_name_warning_lbl.grid(column=0, row=5, sticky="n")
-            account_btn_add.config(state=DISABLED)
-            account_btn_add.grid(column=2, row=0, sticky="nsew")
-            isCorrect = False
-        else:
-            account_name_warning_lbl.config(text="")
-            account_name_warning_lbl.grid(column=0, row=5, sticky="n")
-            account_btn_add.config(state="normal")
-            account_btn_add.grid(column=2, row=0, sticky="nsew")
-            isCorrect = True
-    def control_password(*args):
-        global value1
-        global account_passw_warning_lbl
-        global account_btn_add
-        global isCorrect
-
-        value1 = entry_password.get()
-        textt = ""
-        if len(value1) < 4:
-            textt = "sifreniz cok kisa!!!"
-            account_btn_add.config(state=DISABLED)
-            account_btn_add.grid(column=2, row=0, sticky="nsew")
-            isCorrect = False
-        else:
-            account_btn_add.config(state=NORMAL)
-            account_btn_add.grid(column=2, row=0, sticky="nsew")
-            isCorrect = True    
-        if len(value1) > 11:
-            entry_password.set(value1[:12])
-            isCorrect = False
-        else:
-            account_btn_add.config(state=NORMAL)
-            account_btn_add.grid(column=2, row=0, sticky="nsew")
-            isCorrect = True    
-        account_passw_warning_lbl.config(text=textt)
-        account_passw_warning_lbl.grid(column=0, row=2, sticky="n")
+        if entry_passw_add_user.get() == password and len(entry_name_add_user.get())==0:
+            warning_lbl_add_user.configure(text="")
+            btn_add_user.configure(state=NORMAL)
+            activateEntryName()
+        elif entry_passw_add_user.get() != password and len(entry_passw_add_user.get())>0:
+            warning_text = "ŞİFRE YANLIŞ!!!"
+            warning_lbl_add_user.configure(text=warning_text)  # yazdirmiyor!!!!!!
+            entry_passw_add_user.delete(0, END)
+        if entry_passw_add_user.get() == password and len(entry_name_add_user.get())>3:
+            add_userr()
 
     global frame_bg
-    global account_passw_warning_lbl
-    global value1
-    global value_name
-    global entry_password
-    global entry_name
-    global account_name_warning_lbl
-    global account_btn_add
+    global name
+    global Ids
+    global check
+    global frame
+    global known_face_encondings
+    global known_face_names
+    global face_locations
+    global top, right, bottom, left
 
     bgg = "#7f8c8d"
     warning_color = "#dc1200"
@@ -529,7 +465,7 @@ def add_user():
     button_color = "#9b59b6"
 
     user_top = Toplevel(background=bgg)
-    user_top.overrideredirect(True)  # cercevenin cikacagi yeri belirle ve cikis butonu koy
+    user_top.overrideredirect(True)
     user_top.minsize(300, 300)
     w = frame_bg.winfo_width()
     h = frame_bg.winfo_height()
@@ -548,70 +484,66 @@ def add_user():
     user_top.rowconfigure(4, weight=4)
     user_top.rowconfigure(5, weight=1)
     user_top.rowconfigure(6, weight=1)
-
     user_top.rowconfigure(7, weight=8)
     user_top.rowconfigure(8, weight=16)
-    user_top.rowconfigure(4, weight=4)
+    user_top.rowconfigure(9, weight=4)
     '''////////////////////////////////////////'''
 
-    entry_password = StringVar()
-    entry_password.trace('w', control_password)
-    entry_name = StringVar()
-    entry_name.trace('w', control_name)
+    var_password_add_user = StringVar()
+    var_password_add_user.trace('w', control_password_add_user)
+    var_name_add_user = StringVar()
+    var_name_add_user.trace('w', control_name_add_user)
 
     '''////////////////////////////////////////'''
     text1 = "* ekranın karşında 1 kişi olmalı"
     text2 = "* isimde boşluk veya özel karakter olmamalı"
     text3 = "* 3 adet resim çekilecektir"
     
-    isCorrect = False
+    lbl_passw_add_user = Label(user_top, text="Sifrenizi Girin: ", bg=bgg, font=("bold", 15), border=0, width=25)
+    lbl_passw_add_user.grid(column=0, row=0, sticky="s")
 
-    account_lbl_passw = Label(user_top, text="Sifrenizi Girin: ", bg=bgg, font=("bold", 15), border=0, width=25)
-    account_lbl_passw.grid(column=0, row=0, sticky="s")
+    entry_passw_add_user = Entry(user_top, textvar=var_password_add_user, highlightthickness=0, border=0, show="*", disabledbackground=buttoncolor_char, width=25)
+    entry_passw_add_user.grid(column=0, row=1)
 
-    account_entry_passw = Entry(user_top, textvar=entry_password, highlightthickness=0, border=0, show="*", disabledbackground=buttoncolor_char, width=25)
-    account_entry_passw.grid(column=0, row=1)
-
-    account_passw_warning_lbl = Label(user_top,  text="Uyarii", bg=bgg, font=("bold", 15), fg=warning_color, border=0, width=50)
-    # account_passw_warning_lbl.grid(column=0, row=2, sticky="n")
+    warning_lbl_passw_add_user = Label(user_top,  text="", bg=bgg, font=("bold", 15), fg=warning_color, border=0, width=50)
+    warning_lbl_passw_add_user.grid(column=0, row=2, sticky="n")
     '''///////////////////////////////////////'''
-    account_lbl_name = Label(user_top, text="İsminizi Girin: ", bg=bgg,  font=("bold", 15), border=0, width=25)
-    account_lbl_name.grid(column=0, row=3, sticky="s")
+    lbl_name_add_user = Label(user_top, text="İsminizi Girin: ", bg=bgg,  font=("bold", 15), border=0, width=25)
+    lbl_name_add_user.grid(column=0, row=3, sticky="s")
 
-    account_entry_name = Entry(user_top, textvar=entry_name, highlightthickness=0, state=DISABLED, border=0, width=25)
-    account_entry_name.grid(column=0, row=4)
+    entry_name_add_user = Entry(user_top, textvar=var_name_add_user, highlightthickness=0, state=DISABLED, border=0, width=25)
+    entry_name_add_user.grid(column=0, row=4)
 
-    account_name_warning_lbl = Label(user_top, text="Uyariiii", bg=bgg, font=("bold", 15), fg=warning_color, border=0, width=50)
-    # account_name_warning_lbl.grid(column=0, row=5, sticky="n")
+    warning_lbl_name_add_user = Label(user_top, text="", bg=bgg, font=("bold", 15), fg=warning_color, border=0, width=50)
+    warning_lbl_name_add_user.grid(column=0, row=5, sticky="n")
 
-    account_warning_lbl = Label(user_top, text="Uyariiii", bg=bgg, font=("bold", 12), fg=warning_color, border=0, width=50)
-    # account_warning_lbl.grid(column=0, row=6, sticky="nsew")
+    warning_lbl_add_user = Label(user_top, text="", bg=bgg, font=("bold", 12), fg=warning_color, border=0, width=50)
+    warning_lbl_add_user.grid(column=0, row=6, sticky="nsew")
 
-    account_lbl_info =  Label(user_top, text=f"{text1}\n{text2}\n{text3}", bg=bgg, font=("bold", 13), border=0)
-    account_lbl_info.grid(column=0, row=7, sticky="nsew")
+    lbl_info_add_user =  Label(user_top, text=f"{text1}\n{text2}\n{text3}", bg=bgg, font=("bold", 13), border=0)
+    lbl_info_add_user.grid(column=0, row=7, sticky="nsew")
     '''///////////////////////////////////////////////'''
-    keyboard_lbl = Label(user_top, border=0, bg=buttoncolor_char)
-    keyboard_lbl.grid(column=0, row=8, sticky="nsew")
+    keyboard_lbl_add_user = Label(user_top, border=0, bg=buttoncolor_char)
+    keyboard_lbl_add_user.grid(column=0, row=8, sticky="nsew")
 
-    keyboard(keyboard_lbl, account_entry_passw)
+    keyboard(keyboard_lbl_add_user, entry_passw_add_user)
 
     '''////////////////////////////////////////'''
-    account_lbl_buttons = Label(user_top, border=0, bg=bgg)
-    account_lbl_buttons.grid(column=0, row=9, sticky="nsew")
-    account_lbl_buttons.columnconfigure(0, weight=1)
-    account_lbl_buttons.columnconfigure(1, weight=1)
-    account_lbl_buttons.columnconfigure(2, weight=1)
-    account_lbl_buttons.rowconfigure(0, weight=1)
+    lbl_buttons_add_user = Label(user_top, border=0, bg=bgg)
+    lbl_buttons_add_user.grid(column=0, row=9, sticky="nsew")
+    lbl_buttons_add_user.columnconfigure(0, weight=1)
+    lbl_buttons_add_user.columnconfigure(1, weight=1)
+    lbl_buttons_add_user.columnconfigure(2, weight=1)
+    lbl_buttons_add_user.rowconfigure(0, weight=1)
+    btn_back_add_user = Button(lbl_buttons_add_user, text="Kapat", bg=button_color, border=0, highlightthickness=0, font=font, command=user_top.destroy)
+    btn_back_add_user.grid(column=0, row=0, sticky="nsew")
 
-    account_btn_back = Button(account_lbl_buttons, text="Kapat", bg=button_color, border=0, highlightthickness=0, font=font, command=user_top.destroy)
-    account_btn_back.grid(column=0, row=0, sticky="nsew")
+    btn_delete_add_user = Button(lbl_buttons_add_user, text="Sil", bg=button_color, border=0, highlightthickness=0, font=font, command=delete_char_add_user)
+    btn_delete_add_user.grid(column=1, row=0, sticky="nsew")
 
-    account_btn_delete = Button(account_lbl_buttons, text="Sil", bg=button_color, border=0, highlightthickness=0, font=font, command=delete_char)
-    account_btn_delete.grid(column=1, row=0, sticky="nsew")
-
-    account_btn_add = Button(account_lbl_buttons, text="Ekle", bg=button_color, border=0, highlightthickness=0, font=font)
-    account_btn_add.grid(column=2, row=0, sticky="nsew")
-    account_btn_add.bind("<Button-1>", btn_account_add_clicker)
+    btn_add_user = Button(lbl_buttons_add_user, text="Enter", bg=button_color, border=0, highlightthickness=0, font=font)
+    btn_add_user.grid(column=2, row=0, sticky="nsew")
+    btn_add_user.bind("<Button-1>", btn_add_user_clicker)
 
 def delete_user():
 
@@ -622,18 +554,22 @@ def delete_user():
         try: 
             path = f"{image_path}/{iddd}"
             shutil.rmtree(path)
+
             warning_lbl_cam_del_user.configure(text=f"{iddd} id li {name} kullanicisinin yuz verilerini silme islemi basariyla gerceklesti",bg=bgg)  
-            warning_lbl_cam_del_user.grid(column=0, row=3, sticky="s")
+            # warning_lbl_cam_del_user.grid(column=0, row=3, sticky="s")  #####
             addToLabels()
             entry_passw_del_user.configure(state=NORMAL)
+            # entry_passw_del_user.grid(column=0, row=2, sticky="n")
             btn_cam.configure(state=DISABLED)
-            btn_cam.grid(column=0, row=0)
+            # btn_cam.grid(column=0, row=0)
             entry_passw_del_user.delete(0, END)
             entry_id_del_user.delete(0, END)
             entry_id_del_user.configure(state=DISABLED)
+            keyboard(keyboard_lbl_del_user, entry_passw_del_user)
+            # entry_id_del_user.grid(column=0, row=4, sticky="n")
         except Exception as e:
             warning_lbl_cam_del_user.configure(text="kullanici silinemedi",bg=bgg) 
-            warning_lbl_cam_del_user.grid(column=0, row=3, sticky="s")
+            # warning_lbl_cam_del_user.grid(column=0, row=3, sticky="s")  #####
     def activateEntryId():
         entry_passw_del_user.configure(state=DISABLED)
         entry_id_del_user.configure(state=NORMAL)
@@ -644,11 +580,11 @@ def delete_user():
         
         textt = ""
         if len(face_locations) > 1:
-            textt = "KAMERANIN KARŞISINDA BİRDEN FAZLA KİŞİ BULUNMAMALIDIR!!!"
+            warning_lbl_cam_del_user.configure(text="KAMERANIN KARŞISINDA BİRDEN FAZLA KİŞİ BULUNMAMALIDIR!!!")
         
         elif len(face_locations) == 1:
             print(known_face_names)
-            if len(known_face_names)==0:  textt = "SİSTEME KAYITLI KULLANICI OLMADIĞINDAN SİLME İŞLEMİ YAPILAMIYOR!!!"
+            if len(known_face_names)==0:  warning_lbl_cam_del_user.configure(text="SİSTEME KAYITLI KULLANICI OLMADIĞINDAN SİLME İŞLEMİ YAPILAMIYOR!!!")
             else:
                 name_list = []
                 name_list = list(OrderedDict.fromkeys(known_face_names))
@@ -656,10 +592,10 @@ def delete_user():
                     if nme == name:
                         delete_userr(idd)
                         break   
-        else:
-            textt = "KAMERANIN KARŞISINDA YUZ BULUNMAMAKTADIR!!!"
-        warning_lbl_cam_del_user.configure(text=textt)
-        warning_lbl_cam_del_user.grid(column=0, row=3, sticky="s")
+        else:  warning_lbl_cam_del_user.configure(text="KAMERANIN KARŞISINDA YUZ BULUNMAMAKTADIR!!!")
+        #     textt = "KAMERANIN KARŞISINDA YUZ BULUNMAMAKTADIR!!!"
+        # warning_lbl_cam_del_user.configure(text=textt)
+        # warning_lbl_cam_del_user.grid(column=0, row=3, sticky="s")  #####
     def btn_del_user_clicker(event):
         
         warning_text = ""
@@ -668,9 +604,9 @@ def delete_user():
 
         if entry_passw_del_user.get() == password and len(entry_id_del_user.get())==0:
             warning_lbl_id_del_user.config(text="")
-            warning_lbl_id_del_user.grid(column=0, row=5, sticky="n")
+            # warning_lbl_id_del_user.grid(column=0, row=5, sticky="n")
             btn_cam.configure(state=NORMAL)
-            btn_cam.grid(column=0, row=0)
+            # btn_cam.grid(column=0, row=0)
             activateEntryId()
         elif entry_passw_del_user.get() != password and len(entry_passw_del_user.get())>0:
             warning_text = "ŞİFRE YANLIŞ!!!"
@@ -683,11 +619,11 @@ def delete_user():
 
         if len(warning_text)==0:  
             warning_lbl_del_user.configure(text=warning_text,bg=bgg)   
-            warning_lbl_del_user.grid(column=0, row=6, sticky="nsew")
+            # warning_lbl_del_user.grid(column=0, row=6, sticky="nsew")
 
         else:  
             warning_lbl_del_user.configure(text=warning_text, bg="#639a67")      # renklere bak
-            warning_lbl_del_user.grid(column=0, row=6, sticky="nsew")
+            # warning_lbl_del_user.grid(column=0, row=6, sticky="nsew")
     def control_password_del_user(*args):
 
         btn_del_user.configure(text="Enter")
@@ -697,28 +633,28 @@ def delete_user():
         password_del_user = var_password_del_user.get()
         if len(password_del_user) < 4:
             btn_del_user.config(state=DISABLED)
-            btn_del_user.grid(column=2, row=0, sticky="nsew")
+            # btn_del_user.grid(column=2, row=0, sticky="nsew")
         else:
             btn_del_user.config(state=NORMAL)
-            btn_del_user.grid(column=2, row=0, sticky="nsew")
+            # btn_del_user.grid(column=2, row=0, sticky="nsew")
         if len(password_del_user) > 11:
             var_password_del_user.set(password_del_user[:12])
         else:
             btn_del_user.config(state=NORMAL)
-            btn_del_user.grid(column=2, row=0, sticky="nsew")    
+            # btn_del_user.grid(column=2, row=0, sticky="nsew")    
     def control_id(*args):
 
         textt = ""
         id_del_user = var_id.get()
-        if not id_del_user.isnumeric():  # id rakam olamaz
+        if not int(id_del_user).isnumeric():  # id rakam olamaz
             textt = "Id sayi olmalidir!!!"
             btn_del_user.config(state=DISABLED)
-            btn_del_user.grid(column=2, row=0, sticky="nsew")
+            # btn_del_user.grid(column=2, row=0, sticky="nsew")
         else:
             btn_del_user.config(state=NORMAL)
-            btn_del_user.grid(column=2, row=0, sticky="nsew")    
+            # btn_del_user.grid(column=2, row=0, sticky="nsew")    
         warning_lbl_id_del_user.configure(text=textt)
-        warning_lbl_id_del_user.grid(column=0, row=5, sticky="n")
+        # warning_lbl_id_del_user.grid(column=0, row=5, sticky="n")
 
     global frame_bg
     global Ids
@@ -850,64 +786,45 @@ def password_register():
         btn_change_passw.configure(text="Enter")
         warning_lbl.configure(text="",bg=bgg)    
         password1 = var_password.get()
+        statee = NORMAL
         if len(password1) < 4:
-            btn_change_passw.config(state=DISABLED)
-            btn_change_passw.grid(column=2, row=0, sticky="nsew")
-        else:
-            btn_change_passw.config(state=NORMAL)
-            btn_change_passw.grid(column=2, row=0, sticky="nsew")
+            statee = DISABLED
         if len(password1) > 11:
             var_password.set(password1[:12])
-        else:
-            btn_change_passw.config(state=NORMAL)
-            btn_change_passw.grid(column=2, row=0, sticky="nsew")
+        btn_change_passw.config(state=statee)
     def control_new_password(*args):
 
         warning_lbl.configure(text="",bg=bgg)    
         password2 = var_new_password.get()
         textt = ""
+        statee = NORMAL
         if len(password2) == 0:
-            btn_change_passw.config(state=DISABLED)
-            btn_change_passw.grid(column=2, row=0, sticky="nsew")
+            statee = DISABLED
         elif len(password2) < 4:
             textt = "sifreniz cok kisa!!!"
-            btn_change_passw.config(state=DISABLED)
-            btn_change_passw.grid(column=2, row=0, sticky="nsew")
-        else:
-            btn_change_passw.config(state=NORMAL)
-            btn_change_passw.grid(column=2, row=0, sticky="nsew")
+            statee = DISABLED
         if len(password2) > 11:
             textt = "şifreniz daha uzun olamaz!!!"
             var_new_password.set(password2[:12])
-        else:
-            btn_change_passw.config(state=NORMAL)
-            btn_change_passw.grid(column=2, row=0, sticky="nsew")
         warning_lbl_new_passw.config(text=textt)
-        warning_lbl_new_passw.grid(column=0, row=4, sticky="n")
+        btn_change_passw.config(state=statee)
     def control_again_new_password(*args):
         
         btn_change_passw.configure(text="Kaydet")
         warning_lbl.configure(text="",bg=bgg)    
         password3 = var_again_new_password.get()
         textt = ""
+        statee = NORMAL
         if len(password3) == 0:
-            btn_change_passw.config(state=DISABLED)
-            btn_change_passw.grid(column=2, row=0, sticky="nsew")
+            statee = DISABLED
         elif len(password3) < 4:
             textt = "şifreniz cok kisa!!!"
-            btn_change_passw.config(state=DISABLED)
-            btn_change_passw.grid(column=2, row=0, sticky="nsew")
-        else:
-            btn_change_passw.config(state=NORMAL)
-            btn_change_passw.grid(column=2, row=0, sticky="nsew")
+            statee = DISABLED
         if len(password3) > 11:
             textt = "şifreniz daha uzun olamaz!!!"
             var_again_new_password.set(password3[:12])
-        else:
-            btn_change_passw.config(state=NORMAL)
-            btn_change_passw.grid(column=2, row=0, sticky="nsew")
         warning_lbl_again_new_passw.config(text=textt)
-        warning_lbl_again_new_passw.grid(column=0, row=7, sticky="n")
+        btn_change_passw.config(state=statee)
     def changePassword():
 
         parser.set("account", "password", entry_again_new_passw.get())
@@ -930,16 +847,12 @@ def password_register():
 
         if entry_passw.get() == password and len(entry_new_passw.get())==0 and len(entry_again_new_passw.get())==0:
             warning_lbl_new_passw.config(text="")
-            warning_lbl_new_passw.grid(column=0, row=4, sticky="n")
-            # warning_lbl_again_new_passw.config(text="")
-            # warning_lbl_again_new_passw.grid(column=0, row=7, sticky="n")
             activateEntryNewPassword()
         elif entry_passw.get() != password and len(entry_passw.get())>0:
             warning_text = "ŞİFRE YANLIŞ!!!"
             entry_passw.delete(0, END)
         if entry_passw.get() != entry_new_passw.get() and len(entry_new_passw.get())>3 and len(entry_new_passw.get())<13:  # 4-12
             warning_lbl_again_new_passw.config(text="")
-            warning_lbl_again_new_passw.grid(column=0, row=7, sticky="n")
             activateEntryAgainNewPassword()
         elif entry_passw.get() == entry_new_passw.get() and len(entry_passw.get())>0:
             warning_text = "YENİ ŞİFRE ESKİ ŞİFREYLE AYNI OLAMAZ!!!"
@@ -1178,22 +1091,22 @@ icon_passw = icon_passw.subsample(6, 6)
 addToLabels()
 '''///////////////////////////////////////'''
 
-btn_recog = Button(options_lbl, image=icon_recog, justify="center",padx=4 , border=0, bg="#7bed9f", highlightthickness=0)
+btn_recog = Button(options_lbl, image=icon_recog, justify="center", border=0, bg="#7bed9f", highlightthickness=0)
 btn_recog.bind("<Button-1>", btn_recog_clicker)
 btn_recog.grid(column=0, row=0, sticky="nsew")
 
-btn_user_add = Button(options_lbl, image=icon_add, justify="center",padx=4 , border=0, bg="#70a1ff", highlightthickness=0)
+btn_user_add = Button(options_lbl, image=icon_add, justify="center", border=0, bg="#70a1ff", highlightthickness=0)
 btn_user_add.bind("<Button-1>", btn_add_user_clicker)
 btn_user_add.grid(column=1, row=0, sticky="nsew")
 
-btn_user_delete = Button(options_lbl, image=icon_delete, justify="center",padx=4 , border=0, bg="#B33771", highlightthickness=0, command=delete_user)
+btn_user_delete = Button(options_lbl, image=icon_delete, justify="center", border=0, bg="#B33771", highlightthickness=0, command=delete_user)
 btn_user_delete.bind("<Button-1>", btn_delete_user_clicker)
 btn_user_delete.grid(column=2, row=0, sticky="nsew")
 
-btn_door = Button(options_lbl, image=icon_door, justify="center",padx=4 , border=0, bg="#a4b0be", highlightthickness=0, command=door_register)
+btn_door = Button(options_lbl, image=icon_door, justify="center", border=0, bg="#a4b0be", highlightthickness=0, command=door_register)
 btn_door.grid(column=3, row=0, sticky="nsew")
 
-btn_passw = Button(options_lbl, image=icon_passw, justify="center",padx=4 , border=0, bg="#A75454", highlightthickness=0)
+btn_passw = Button(options_lbl, image=icon_passw, justify="center", border=0, bg="#A75454", highlightthickness=0)
 btn_passw.bind("<Button-1>", btn_register_password_clicker)
 
 btn_passw.grid(column=4, row=0, sticky="nsew")
