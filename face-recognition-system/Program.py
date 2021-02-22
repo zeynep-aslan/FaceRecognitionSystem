@@ -28,6 +28,8 @@ thread_stop = False
 img_path = "icons"
 '''///////////////////////////////////////'''
 cap = cv2.VideoCapture(0)
+# cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1260)
+# cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 768)
 '''///////////////////////////////////////'''
 
 def addToLabels():
@@ -58,7 +60,6 @@ def run():
     global known_face_encondings
     global known_face_names
     global Ids
-    global frame_bg
     global frame
     global top, right, bottom, left
     global name
@@ -72,6 +73,11 @@ def run():
             global cap
             global tkimage1
             ret, frame = cap.read()
+            # if not ret:  # 144p oldu
+                # cap = cv2.VideoCapture(0)
+                # cap.set(cv2.CAP_PROP_FRAME_WIDTH, video_label.winfo_width())
+                # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, video_label.winfo_height())
+                # ret, frame = cap.read()
             if ret:
                 frame = cv2.flip(frame, 1)
                 frame_copy = frame.copy()
@@ -107,12 +113,12 @@ def run():
                 new_rgb_frame = frame_copy.copy() 
                 new_rgb_frame = new_rgb_frame[:, :, ::-1]
                 img = Image.fromarray(new_rgb_frame)
-                img = img.resize((frame_bg.winfo_width(), frame_bg.winfo_height()), Image.BICUBIC)
+                img = img.resize((video_label.winfo_width(), video_label.winfo_height()), Image.BICUBIC)
                 tkimage1 = ImageTk.PhotoImage(img)
                 if thread_stop:
                     video_label.configure(image=tkimage1)
                     video_label.image = tkimage1
-                    video_label.grid(column=0, row=0, sticky=("nsew"))
+                    # video_label.grid(column=0, row=0, sticky=("nsew"))
 
             elif root.winfo_exists():
                 cap = cv2.VideoCapture(0)
@@ -374,13 +380,13 @@ def add_user():
         check = False
         if len(faces) > 0:
             try:
-                known_face_encondings += faces  # local variable 'known_face_encondings' referenced before assignment
-                # known_face_encondings.append(faces)
+                # known_face_encondings += faces  # local variable 'known_face_encondings' referenced before assignment
+                known_face_encondings.append(img_encoding)
                 Ids.append(str(latest))
                 for i in faces:
                     known_face_names.append(entry_name_add_user.get())
                 warning_lbl_add_user.config(text=f"kullanici basariyla eklendi, id bilgisi: {latest}")
-
+                # time.sleep(1)  # label in text ine yazdirmiyor
                 entry_passw_add_user.configure(state=NORMAL)
                 entry_passw_add_user.delete(0, END)
                 entry_name_add_user.delete(0, END)
@@ -415,21 +421,29 @@ def add_user():
         var_name = var_name_add_user.get()
         print(known_face_names)
         textt=""
-        statee=NORMAL
+        # statee=NORMAL
+        btn_add_user.config(state=NORMAL)
+
         if len(face_locations) > 1:
             textt="kameranin karsisinda birden fazla kisi bulunmamalidir"
-            statee=DISABLED
+            btn_add_user.config(state=DISABLED)
+            # statee=DISABLED
         elif name in known_face_names:
             textt="kayitli kullaniciyi bir daha ekleyemezsiniz!"
-            statee=DISABLED
+            btn_add_user.config(state=DISABLED)
+            # statee=DISABLED
         elif " " in var_name:
             textt="isimde bosluk bulunmamalidir"
-            statee=DISABLED
+            btn_add_user.config(state=DISABLED)
+            # statee=DISABLED
         elif any(char.isdigit() for char in var_name):
             textt="isimde sayi bulunmamalidir"
-            statee=DISABLED
+            btn_add_user.config(state=DISABLED)
+            # statee=DISABLED
+        else:
+            btn_add_user.config(state=NORMAL)        
         warning_lbl_name_add_user.config(text=textt)
-        btn_add_user.config(state=statee)
+        # btn_add_user.config(state=NORMAL)
     def btn_add_user_clicker(event):
         
         parser = ConfigParser()
@@ -447,7 +461,7 @@ def add_user():
         if entry_passw_add_user.get() == password and len(entry_name_add_user.get())>3:
             add_userr()
 
-    global frame_bg
+
     global name
     global Ids
     global check
@@ -469,7 +483,9 @@ def add_user():
     user_top.minsize(300, 300)
     w = frame_bg.winfo_width()
     h = frame_bg.winfo_height()
-    user_top.geometry('%dx%d+%d+%d' % (int((0.3*w)), h, int(0.7*w), int(0)))
+    bg_w = video_label.winfo_width()
+    ww=int(0.3*w)
+    user_top.geometry('%dx%d+%d+%d' % (ww, h, w-ww, 0))
     user_top.resizable(False, False) 
     user_top.wm_attributes('-topmost', 1)
     user_top.grab_set()
@@ -556,20 +572,15 @@ def delete_user():
             shutil.rmtree(path)
 
             warning_lbl_cam_del_user.configure(text=f"{iddd} id li {name} kullanicisinin yuz verilerini silme islemi basariyla gerceklesti",bg=bgg)  
-            # warning_lbl_cam_del_user.grid(column=0, row=3, sticky="s")  #####
             addToLabels()
             entry_passw_del_user.configure(state=NORMAL)
-            # entry_passw_del_user.grid(column=0, row=2, sticky="n")
             btn_cam.configure(state=DISABLED)
-            # btn_cam.grid(column=0, row=0)
             entry_passw_del_user.delete(0, END)
             entry_id_del_user.delete(0, END)
             entry_id_del_user.configure(state=DISABLED)
             keyboard(keyboard_lbl_del_user, entry_passw_del_user)
-            # entry_id_del_user.grid(column=0, row=4, sticky="n")
         except Exception as e:
             warning_lbl_cam_del_user.configure(text="kullanici silinemedi",bg=bgg) 
-            # warning_lbl_cam_del_user.grid(column=0, row=3, sticky="s")  #####
     def activateEntryId():
         entry_passw_del_user.configure(state=DISABLED)
         entry_id_del_user.configure(state=NORMAL)
@@ -593,55 +604,44 @@ def delete_user():
                         delete_userr(idd)
                         break   
         else:  warning_lbl_cam_del_user.configure(text="KAMERANIN KARŞISINDA YUZ BULUNMAMAKTADIR!!!")
-        #     textt = "KAMERANIN KARŞISINDA YUZ BULUNMAMAKTADIR!!!"
-        # warning_lbl_cam_del_user.configure(text=textt)
-        # warning_lbl_cam_del_user.grid(column=0, row=3, sticky="s")  #####
     def btn_del_user_clicker(event):
         
         warning_text = ""
         parser.read(filee)
-        password = parser.get("account", "password")  # her seferinde okumadan yapmanin yoluna bak
+        password = parser.get("account", "password")
 
         if entry_passw_del_user.get() == password and len(entry_id_del_user.get())==0:
             warning_lbl_id_del_user.config(text="")
-            # warning_lbl_id_del_user.grid(column=0, row=5, sticky="n")
             btn_cam.configure(state=NORMAL)
-            # btn_cam.grid(column=0, row=0)
             activateEntryId()
         elif entry_passw_del_user.get() != password and len(entry_passw_del_user.get())>0:
             warning_text = "ŞİFRE YANLIŞ!!!"
             entry_passw_del_user.delete(0, END)
         if entry_id_del_user.get() not in Ids and len(entry_id_del_user.get())>0:
             warning_text = "GEÇERSİZ ID GİRİŞİ"
-            entry_id_del_user.delete(0, END)  # burada girilen id listede degilse sifre silinebilir
+            entry_id_del_user.delete(0, END)
         elif entry_id_del_user.get() in Ids and len(entry_id_del_user.get())>0:
             delete_userr(entry_id_del_user.get())
 
         if len(warning_text)==0:  
             warning_lbl_del_user.configure(text=warning_text,bg=bgg)   
-            # warning_lbl_del_user.grid(column=0, row=6, sticky="nsew")
 
         else:  
             warning_lbl_del_user.configure(text=warning_text, bg="#639a67")      # renklere bak
-            # warning_lbl_del_user.grid(column=0, row=6, sticky="nsew")
     def control_password_del_user(*args):
 
         btn_del_user.configure(text="Enter")
-        warning_lbl_del_user.configure(text="",bg=bgg)   
-        # warning_lbl_del_user.grid(column=0, row=6, sticky="nsew")
+        warning_lbl_del_user.configure(text="",bg=bgg)   # burasi neden calismadi
 
         password_del_user = var_password_del_user.get()
         if len(password_del_user) < 4:
             btn_del_user.config(state=DISABLED)
-            # btn_del_user.grid(column=2, row=0, sticky="nsew")
         else:
             btn_del_user.config(state=NORMAL)
-            # btn_del_user.grid(column=2, row=0, sticky="nsew")
         if len(password_del_user) > 11:
             var_password_del_user.set(password_del_user[:12])
         else:
             btn_del_user.config(state=NORMAL)
-            # btn_del_user.grid(column=2, row=0, sticky="nsew")    
     def control_id(*args):
 
         textt = ""
@@ -656,7 +656,6 @@ def delete_user():
         warning_lbl_id_del_user.configure(text=textt)
         # warning_lbl_id_del_user.grid(column=0, row=5, sticky="n")
 
-    global frame_bg
     global Ids
     global face_locations
     global known_face_names
@@ -675,7 +674,9 @@ def delete_user():
     del_user_top.overrideredirect(True)
     w = frame_bg.winfo_width()
     h = frame_bg.winfo_height()
-    del_user_top.geometry('%dx%d+%d+%d' % (int((0.3*w)), h, int(0.7*w), int(0)))
+    bg_w = video_label.winfo_width()
+    ww=int(0.3*w)
+    del_user_top.geometry('%dx%d+%d+%d' % (ww, h, w-ww, 0)) # +sol ust kose koordinatlari
     del_user_top.resizable(False, False) 
     del_user_top.wm_attributes('-topmost', 1)
     del_user_top.grab_set()
@@ -868,7 +869,7 @@ def password_register():
         if len(warning_text)==0:  warning_lbl.configure(text=warning_text,bg=bgg)    
         else:  warning_lbl.configure(text=warning_text,bg="#639a67")    
 
-    global frame_bg
+    # global frame_bg
     global password
 
     bgg = "#4cd137"
@@ -884,7 +885,9 @@ def password_register():
     password_top.overrideredirect(True)
     w = frame_bg.winfo_width()
     h = frame_bg.winfo_height()
-    password_top.geometry('%dx%d+%d+%d' % (int((0.3*w)), h, int(0.7*w), int(0)))
+    bg_w = video_label.winfo_width()
+    ww=int(0.3*w)
+    password_top.geometry('%dx%d+%d+%d' % (ww, h, w-ww, 0))
     password_top.resizable(False, False) 
     password_top.wm_attributes('-topmost', 1)
     password_top.grab_set()
@@ -1039,7 +1042,6 @@ root.geometry("750x500")
 root.wm_attributes('-fullscreen', 'true')
 # root.wm_attributes('-topmost', 1)
 
-root.minsize(750, 400)
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)
 press = 0
@@ -1048,24 +1050,31 @@ press = 0
 content = ttk.Frame(root)
 content.grid(column=0, row=0, sticky=(N, S, E, W))
 content.columnconfigure(0, weight=1)
-content.rowconfigure(0, weight=3)
-content.rowconfigure(1, weight=1)
+content.rowconfigure(0, weight=1)
+content.rowconfigure(1, weight=10)
 '''///////////////////////////////////////'''
 
-frame_bg = ttk.Frame(content, border=0)
-frame_bg.grid(column=0, row=0, sticky=(N, S, E, W))
+# frame_bg = ttk.Frame(content, border=0)
+# frame_bg.grid(column=0, row=0, sticky=(N, E, W))
+
+frame_bg = Label(content, border=0, bg="#7f8c8d")
+frame_bg.grid(column=0, row=0, sticky=("wen"))
 
 image = Image.open("orange.jpeg")
 img1 = ImageTk.PhotoImage(image)
+# bgg = "#7f8c8d"
+video_label = Label(frame_bg, image=img1, border=0, bg="#7f8c8d")
+video_label.grid(column=0, row=0, sticky=("wn"))  ##
 
-video_label = Label(frame_bg, image=img1, border=0)
-video_label.grid(column=0, row=0, sticky=("nsew"))  ##
+# cap = cv2.VideoCapture(0)
+# cap.set(cv2.CAP_PROP_FRAME_WIDTH, video_label.winfo_width())
+# cap.set(cv2.CAP_PROP_FRAME_HEIGHT, video_label.winfo_height())
 
 '''///////////////////////////////////////'''
-options_lbl = Label(content, border=0)
+options_lbl = Label(content, border=0, bg="#fbc531")  # , height=int(content.winfo_height()/5)
 options_lbl.grid(column=0, row=1, sticky="nsew")
-options_lbl.columnconfigure(0, weight=1)
 
+options_lbl.columnconfigure(0, weight=1)
 options_lbl.columnconfigure(1, weight=1)
 options_lbl.columnconfigure(2, weight=1)
 options_lbl.columnconfigure(3, weight=1)
