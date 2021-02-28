@@ -12,8 +12,9 @@ import numpy as np
 import os
 import shutil
 from collections import OrderedDict
+import cvlib as cv
 
-known_face_encondings = []  # globali burda tanimlamayi dene
+known_face_encondings = []
 known_face_names = []
 Ids = []
 image_path = "known_faces"
@@ -28,9 +29,9 @@ thread_stop = False
 img_path = "icons"
 '''///////////////////////////////////////'''
 cap = cv2.VideoCapture(0)
-# cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1260)
-# cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 768)
 '''///////////////////////////////////////'''
+frame_copy = ""
+CONFIDANCE = 0.97
 
 def addToLabels():
     global known_face_encondings
@@ -57,79 +58,86 @@ def addToLabels():
                     name = os.path.split(filename)[1].split("-")[0]
                     known_face_names.append(name)
 def run():
-    global known_face_encondings
-    global known_face_names
-    global Ids
-    global frame
-    global top, right, bottom, left
-    global name
+    global ret
     global face_locations
-    global check
     global thread_stop
     global frame_copy
-    global new_rgb_frame
+    ret=False
     try:
+        global cap
+        global tkimage1
         while root.winfo_exists() and thread_stop:
-            global cap
-            global tkimage1
             ret, frame = cap.read()
-            # if not ret:  # 144p oldu
-                # cap = cv2.VideoCapture(0)
-                # cap.set(cv2.CAP_PROP_FRAME_WIDTH, video_label.winfo_width())
-                # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, video_label.winfo_height())
-                # ret, frame = cap.read()
             if ret:
                 frame = cv2.flip(frame, 1)
                 frame_copy = frame.copy()
-                h, w, channels = frame_copy.shape
-                rgb_frame = cv2.cvtColor(frame_copy, cv2.COLOR_BGR2RGB)
-
-                face_locations = fr.face_locations(rgb_frame)
-                face_encodings = fr.face_encodings(rgb_frame, face_locations)
-                try:
-                    for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
-                        matches = fr.compare_faces(known_face_encondings, face_encoding, TOLERANCE)
-                        # print(matches)  #  [True, False, False, False, False, False, False]
-                        name = ""
-                        distance = ""
-                        face_distances = fr.face_distance(known_face_encondings, face_encoding)
-                        best_match_index = np.argmin(face_distances)
-                        match = matches[best_match_index]
-
-                        if match:
-                            name = known_face_names[best_match_index]
-                            distance = format(face_distances[best_match_index],".3f")
-                        if not check:
-                            cv2.rectangle(frame_copy, (left, top), (right, bottom), (0, 255, 0), 2)
-                            cv2.rectangle(frame_copy, (left, bottom -35), (right, bottom), (0, 255, 0), cv2.FILLED)
-                            cv2.putText(frame_copy, f"{name}  {str(distance)}", (left + 4, bottom - 4), cv2.FONT_HERSHEY_SIMPLEX, .7, (255, 255, 255), 2)
-                        else:
-                            cv2.putText(frame_copy, "lutfen bekleyin", (int(w/10), int(2*h/3)), cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 0, 255), 3)
-                except:
-                    if len(known_face_encondings) != 0 and len(known_face_names) != 0:  #
-                        cv2.putText(frame_copy, "lutfen bekleyin", (int(w/10),int(2*h/3)), cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 0, 255), 3)
-
                 '''///////////////////////////////////////'''
-                new_rgb_frame = frame_copy.copy() 
+                try:
+                    if len(face_locations) > 0:
+                        for top, right, bottom, left in face_locations:
+                            if not check:  #  buraya veya daha ustune confidance koy, 0.99 dan buyukse cizdir
+                                cv2.rectangle(frame_copy, (left, top), (right, bottom), (0, 255, 0), 2)
+                                cv2.rectangle(frame_copy, (left, bottom -35), (right, bottom), (0, 255, 0), cv2.FILLED)
+                                cv2.putText(frame_copy, f"{name}  {str(distance)}", (left + 4, bottom - 4), cv2.FONT_HERSHEY_SIMPLEX, .7, (255, 255, 255), 2)
+                            else:
+                                cv2.putText(frame_copy, "lutfen bekleyin", (int(w/10), int(2*h/3)), cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 0, 255), 3)
+                except:
+                    cv2.putText(frame_copy, "lutfen bekleyinnnn", (int(w/10), int(2*h/3)), cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 0, 255), 3)
+                '''///////////////////////////////////////'''
+                new_rgb_frame = frame_copy 
                 new_rgb_frame = new_rgb_frame[:, :, ::-1]
                 img = Image.fromarray(new_rgb_frame)
                 img = img.resize((video_label.winfo_width(), video_label.winfo_height()), Image.BICUBIC)
                 tkimage1 = ImageTk.PhotoImage(img)
-                if thread_stop:
-                    video_label.configure(image=tkimage1)
-                    video_label.image = tkimage1
-                    # video_label.grid(column=0, row=0, sticky=("nsew"))
-
+                video_label.configure(image=tkimage1)
+                video_label.image = tkimage1
             elif root.winfo_exists():
                 cap = cv2.VideoCapture(0)
-            root.protocol("WM_DELETE_WINDOW", destroy_)
             if root.winfo_exists():
                 root.update()
         if not thread_stop:
             cap.release()
     except:
         cap.release()
-        pass
+        pass    
+
+def run_info():
+    global known_face_encondings
+    global known_face_names
+    global name
+    global face_locations
+    global thread_stop
+    global frame_copy
+    global distance
+    global ret
+
+    while thread_stop:
+        if ret:
+            try:
+                rgb_frame = cv2.cvtColor(frame_copy, cv2.COLOR_BGR2RGB)
+                h, w, channels = frame_copy.shape
+                locations, confidence = cv.detect_face(rgb_frame)
+                isThere = (True for x in confidence if float(x) > CONFIDANCE)  # generator, disa [] koyarsan ['True] doner, bu sekilde generator adresini atadik next ile ulasicaz 
+                name, distance = "", ""
+                face_locations = []
+                if next(isThere):
+                    left, top, right, bottom = locations[0][0], locations[0][1], locations[0][2], locations[0][3]
+                    face_locations = [(top, right, bottom, left)]
+                    face_encodings = fr.face_encodings(rgb_frame, face_locations)
+                    try:
+                        for face_encoding in face_encodings:
+                            matches = fr.compare_faces(known_face_encondings, face_encoding, TOLERANCE)
+                            face_distances = fr.face_distance(known_face_encondings, face_encoding)
+                            best_match_index = np.argmin(face_distances)
+                            match = matches[best_match_index]
+                            if match:
+                                name = known_face_names[best_match_index]
+                                distance = format(face_distances[best_match_index],".3f")
+                    except Exception as e:
+                        print("hata: ", e)            
+            except:
+                pass
+
 def quit_():
     if messagebox.askokcancel("Quit", "Do you really wish to quit?"):
         root.quit()
@@ -153,10 +161,10 @@ def keyboard(keyboard_lbl, keyboard_entry):
     row1 = keyBoard_list['1']
     row2 = keyBoard_list['2']
 
-    keyboard_lbl.columnconfigure(0, weight=2)  # bos
+    keyboard_lbl.columnconfigure(0, weight=2)
     keyboard_lbl.columnconfigure(1, weight=2)
     keyboard_lbl.columnconfigure(2, weight=2)
-    keyboard_lbl.rowconfigure(0, weight=2)  # bos
+    keyboard_lbl.rowconfigure(0, weight=2)
     keyboard_lbl.rowconfigure(1, weight=2)
     keyboard_lbl.rowconfigure(2, weight=2)
     keyboard_lbl.rowconfigure(3, weight=2)
@@ -333,8 +341,6 @@ def add_user():
         entry_name_add_user.delete(len(entry_name_add_user.get()) - 1, END)
     def add_userr():
 
-        # global known_face_encondings  #######
-        # var_name = var_name_add_user.get()
         number_of_img = 3
         list_int = map(int, Ids)
         list_int = list(list_int)
@@ -366,21 +372,17 @@ def add_user():
             try:
                 img_encoding = fr.face_encodings(face_img)[0]
                 faces.append(img_encoding)
-                # print(Ids)
                 try:
                     os.mkdir(f"{image_path}/{latest}")
                 except:
                     pass   
-                # print(Ids) 
                 path = f"{image_path}/{latest}/{entry_name_add_user.get()}-{i}.jpeg"
                 cv2.imwrite(path, face_img)
             except Exception as e:
-                # print(f"yuz bulunamadi!!, aldigim error: {e}\n")
                 warning_lbl_add_user.config(text=f"yuz bulunamadi!!aldigim error: {e}")
         check = False
         if len(faces) > 0:
             try:
-                # known_face_encondings += faces  # local variable 'known_face_encondings' referenced before assignment
                 known_face_encondings.append(img_encoding)
                 Ids.append(str(latest))
                 for i in faces:
@@ -421,29 +423,23 @@ def add_user():
         var_name = var_name_add_user.get()
         print(known_face_names)
         textt=""
-        # statee=NORMAL
         btn_add_user.config(state=NORMAL)
 
         if len(face_locations) > 1:
             textt="kameranin karsisinda birden fazla kisi bulunmamalidir"
             btn_add_user.config(state=DISABLED)
-            # statee=DISABLED
         elif name in known_face_names:
             textt="kayitli kullaniciyi bir daha ekleyemezsiniz!"
             btn_add_user.config(state=DISABLED)
-            # statee=DISABLED
         elif " " in var_name:
             textt="isimde bosluk bulunmamalidir"
             btn_add_user.config(state=DISABLED)
-            # statee=DISABLED
         elif any(char.isdigit() for char in var_name):
             textt="isimde sayi bulunmamalidir"
             btn_add_user.config(state=DISABLED)
-            # statee=DISABLED
         else:
             btn_add_user.config(state=NORMAL)        
         warning_lbl_name_add_user.config(text=textt)
-        # btn_add_user.config(state=NORMAL)
     def btn_add_user_clicker(event):
         
         parser = ConfigParser()
@@ -469,7 +465,6 @@ def add_user():
     global known_face_encondings
     global known_face_names
     global face_locations
-    global top, right, bottom, left
 
     bgg = "#7f8c8d"
     warning_color = "#dc1200"
@@ -649,12 +644,9 @@ def delete_user():
         if not int(id_del_user).isnumeric():  # id rakam olamaz
             textt = "Id sayi olmalidir!!!"
             btn_del_user.config(state=DISABLED)
-            # btn_del_user.grid(column=2, row=0, sticky="nsew")
         else:
             btn_del_user.config(state=NORMAL)
-            # btn_del_user.grid(column=2, row=0, sticky="nsew")    
         warning_lbl_id_del_user.configure(text=textt)
-        # warning_lbl_id_del_user.grid(column=0, row=5, sticky="n")
 
     global Ids
     global face_locations
@@ -973,7 +965,6 @@ def door_register():
 def btn_recog_clicker(event):
     global icon_left
     global press
-    global t_rec
     global thread_check
     global thread_stop
     global user_top
@@ -984,8 +975,9 @@ def btn_recog_clicker(event):
         icon_left = icon_left.subsample(6, 6)
         btn_recog.config(image=icon_left)
         t_rec = threading.Thread(target=run)
+        t_run_info = threading.Thread(target=run_info, daemon=True)
         t_rec.start()
-        # time.sleep(2)
+        t_run_info.start()
         thread_check = False
 
     else:
@@ -994,12 +986,6 @@ def btn_recog_clicker(event):
         video_label.configure(image=img1)
         btn_recog.config(image=icon_recog)
         thread_check = True        
-def btn_recog_clicker_main(event):
-    global press
-    global t_rec
-    btn_recog.config(image=icon_recog)
-    t_rec.join()
-    press += 1
 def btn_add_user_clicker(event):
     global thread_check
     global thread_stop
@@ -1007,9 +993,9 @@ def btn_add_user_clicker(event):
     if thread_check:
         thread_stop = True
         t_rec = threading.Thread(target=run)
-        # t_add_user = threading.Thread(target=add_user)  ##
+        t_run_info = threading.Thread(target=run_info)
         t_rec.start()
-        # t_add_user.start()  ##
+        t_run_info.start()
         thread_check = False
         time.sleep(1)
     add_user()
@@ -1020,7 +1006,9 @@ def btn_delete_user_clicker(event):
     if thread_check:
         thread_stop = True
         t_rec = threading.Thread(target=run)
+        t_run_info = threading.Thread(target=run_info)
         t_rec.start()
+        t_run_info.start()
         thread_check = False
         time.sleep(1)
     delete_user()
@@ -1031,15 +1019,17 @@ def btn_register_password_clicker(event):
     if thread_check:
         thread_stop = True
         t_rec = threading.Thread(target=run)
+        t_run_info = threading.Thread(target=run_info)
         t_rec.start()
+        t_run_info.start()
         thread_check = False
         time.sleep(1)
     password_register()
 
 '''///////////////////////////////////////'''
 root = Tk()
-root.geometry("750x500")
-root.wm_attributes('-fullscreen', 'true')
+root.geometry("800x480")
+# root.wm_attributes('-fullscreen', 'true')
 # root.wm_attributes('-topmost', 1)
 
 root.columnconfigure(0, weight=1)
@@ -1050,29 +1040,45 @@ press = 0
 content = ttk.Frame(root)
 content.grid(column=0, row=0, sticky=(N, S, E, W))
 content.columnconfigure(0, weight=1)
-content.rowconfigure(0, weight=1)
-content.rowconfigure(1, weight=10)
+content.rowconfigure(0, weight=3)
+content.rowconfigure(1, weight=1)
 '''///////////////////////////////////////'''
 
 # frame_bg = ttk.Frame(content, border=0)
 # frame_bg.grid(column=0, row=0, sticky=(N, E, W))
 
 frame_bg = Label(content, border=0, bg="#7f8c8d")
-frame_bg.grid(column=0, row=0, sticky=("wen"))
+frame_bg.grid(column=0, row=0, sticky=("nsew"))
 
-image = Image.open("orange.jpeg")
+image = Image.open("green.png")
+print(frame_bg.winfo_width())
+print(frame_bg.winfo_height())
+
+imagee = image.resize((frame_bg.winfo_width(), frame_bg.winfo_height()),Image.ANTIALIAS)
+img1 = ImageTk.PhotoImage(imagee)
+
+bgg = "#7f8c8d"
+
+# image = Image.open("green.png")
+# img1 = ImageTk.PhotoImage(image)
+
+video_label = Label(frame_bg, border=0, bg="#8d3f76")
+video_label.grid(column=0, row=0, sticky=("nsew"))  ##
+image = Image.open("green.png")
 img1 = ImageTk.PhotoImage(image)
-# bgg = "#7f8c8d"
-video_label = Label(frame_bg, image=img1, border=0, bg="#7f8c8d")
-video_label.grid(column=0, row=0, sticky=("wn"))  ##
-
-# cap = cv2.VideoCapture(0)
-# cap.set(cv2.CAP_PROP_FRAME_WIDTH, video_label.winfo_width())
-# cap.set(cv2.CAP_PROP_FRAME_HEIGHT, video_label.winfo_height())
-
+video_label.configure(image=img1)
 '''///////////////////////////////////////'''
 options_lbl = Label(content, border=0, bg="#fbc531")  # , height=int(content.winfo_height()/5)
 options_lbl.grid(column=0, row=1, sticky="nsew")
+
+# image = Image.open("orange.jpeg")
+# # print(frame_bg.winfo_width())  # 1
+# # print(frame_bg.winfo_height())
+
+# imagee = image.resize((video_label.winfo_width(), video_label.winfo_height()),Image.BICUBIC)
+# img1 = ImageTk.PhotoImage(imagee)
+# video_label.configure(image=img1)
+# video_label.image=img1
 
 options_lbl.columnconfigure(0, weight=1)
 options_lbl.columnconfigure(1, weight=1)
@@ -1108,7 +1114,7 @@ btn_user_add = Button(options_lbl, image=icon_add, justify="center", border=0, b
 btn_user_add.bind("<Button-1>", btn_add_user_clicker)
 btn_user_add.grid(column=1, row=0, sticky="nsew")
 
-btn_user_delete = Button(options_lbl, image=icon_delete, justify="center", border=0, bg="#B33771", highlightthickness=0, command=delete_user)
+btn_user_delete = Button(options_lbl, image=icon_delete, justify="center", border=0, bg="#B33771", highlightthickness=0)  # , command=delete_user
 btn_user_delete.bind("<Button-1>", btn_delete_user_clicker)
 btn_user_delete.grid(column=2, row=0, sticky="nsew")
 
@@ -1119,7 +1125,6 @@ btn_passw = Button(options_lbl, image=icon_passw, justify="center", border=0, bg
 btn_passw.bind("<Button-1>", btn_register_password_clicker)
 
 btn_passw.grid(column=4, row=0, sticky="nsew")
-
 
 # t0 = threading.Thread(target=run)
 # t0.start()
