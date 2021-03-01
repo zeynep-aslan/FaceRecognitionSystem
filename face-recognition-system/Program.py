@@ -61,6 +61,7 @@ def run():
     global ret
     global face_locations
     global thread_stop
+    global frame
     global frame_copy
     ret=False
     try:
@@ -100,7 +101,6 @@ def run():
     except:
         cap.release()
         pass    
-
 def run_info():
     global known_face_encondings
     global known_face_names
@@ -110,6 +110,7 @@ def run_info():
     global frame_copy
     global distance
     global ret
+    global left, top, right, bottom
 
     while thread_stop:
         if ret:
@@ -123,6 +124,8 @@ def run_info():
                 if next(isThere):
                     left, top, right, bottom = locations[0][0], locations[0][1], locations[0][2], locations[0][3]
                     face_locations = [(top, right, bottom, left)]
+                    # print(len(face_locations))
+
                     face_encodings = fr.face_encodings(rgb_frame, face_locations)
                     try:
                         for face_encoding in face_encodings:
@@ -137,7 +140,6 @@ def run_info():
                         print("hata: ", e)            
             except:
                 pass
-
 def quit_():
     if messagebox.askokcancel("Quit", "Do you really wish to quit?"):
         root.quit()
@@ -161,22 +163,22 @@ def keyboard(keyboard_lbl, keyboard_entry):
     row1 = keyBoard_list['1']
     row2 = keyBoard_list['2']
 
-    keyboard_lbl.columnconfigure(0, weight=2)
-    keyboard_lbl.columnconfigure(1, weight=2)
-    keyboard_lbl.columnconfigure(2, weight=2)
-    keyboard_lbl.rowconfigure(0, weight=2)
+    keyboard_lbl.rowconfigure(0, weight=2)  # bos
     keyboard_lbl.rowconfigure(1, weight=2)
     keyboard_lbl.rowconfigure(2, weight=2)
-    keyboard_lbl.rowconfigure(3, weight=2)
-    keyboard_lbl.rowconfigure(4, weight=2)
-    keyboard_lbl.rowconfigure(5, weight=2)
-    keyboard_lbl.rowconfigure(6, weight=2)
-    keyboard_lbl.rowconfigure(7, weight=2)
-    keyboard_lbl.rowconfigure(8, weight=2)
-    keyboard_lbl.rowconfigure(9, weight=2)
-    keyboard_lbl.rowconfigure(10, weight=2)
-    keyboard_lbl.rowconfigure(11, weight=2)
-    keyboard_lbl.rowconfigure(12, weight=2)
+    keyboard_lbl.columnconfigure(0, weight=2)  # bos
+    keyboard_lbl.columnconfigure(1, weight=2)
+    keyboard_lbl.columnconfigure(2, weight=2)
+    keyboard_lbl.columnconfigure(3, weight=2)
+    keyboard_lbl.columnconfigure(4, weight=2)
+    keyboard_lbl.columnconfigure(5, weight=2)
+    keyboard_lbl.columnconfigure(6, weight=2)
+    keyboard_lbl.columnconfigure(7, weight=2)
+    keyboard_lbl.columnconfigure(8, weight=2)
+    keyboard_lbl.columnconfigure(9, weight=2)
+    keyboard_lbl.columnconfigure(10, weight=2)
+    keyboard_lbl.columnconfigure(11, weight=2)
+    keyboard_lbl.columnconfigure(12, weight=2)
 
     b0_0 = Button(keyboard_lbl, text=row0[0], bg=buttoncolor_char,  border=0, highlightthickness=0, activebackground=buttoncolor_char,
                 font=font, command=lambda: keyboard_entry.insert(END, row0[0]))
@@ -367,10 +369,13 @@ def add_user():
             time.sleep(1)
             warning_lbl_add_user.config(text="1")
             time.sleep(1)
+            print(top, bottom, left, right)
+            print(frame.shape)
             face_img = frame[top: bottom, left: right]
             print("88")
             try:
-                img_encoding = fr.face_encodings(face_img)[0]
+                img_encoding = fr.face_encodings(face_img)[0]  # list index out of range
+                print("img_encoding: ", img_encoding)
                 faces.append(img_encoding)
                 try:
                     os.mkdir(f"{image_path}/{latest}")
@@ -379,6 +384,7 @@ def add_user():
                 path = f"{image_path}/{latest}/{entry_name_add_user.get()}-{i}.jpeg"
                 cv2.imwrite(path, face_img)
             except Exception as e:
+                print(e)
                 warning_lbl_add_user.config(text=f"yuz bulunamadi!!aldigim error: {e}")
         check = False
         if len(faces) > 0:
@@ -394,7 +400,6 @@ def add_user():
                 entry_name_add_user.delete(0, END)
                 entry_name_add_user.configure(state=DISABLED)
                 keyboard(keyboard_lbl_add_user, entry_passw_add_user)
-
             except Exception as e:
                 print(e)
                 warning_lbl_add_user.config(text=f"yuz bilgileri eklenemedi!!! aldigim error: {e}")
@@ -457,14 +462,15 @@ def add_user():
         if entry_passw_add_user.get() == password and len(entry_name_add_user.get())>3:
             add_userr()
 
-
     global name
     global Ids
     global check
-    global frame
+    global frame_copy
     global known_face_encondings
     global known_face_names
     global face_locations
+    global left, top, right, bottom
+    global frame
 
     bgg = "#7f8c8d"
     warning_color = "#dc1200"
@@ -481,6 +487,7 @@ def add_user():
     bg_w = video_label.winfo_width()
     ww=int(0.3*w)
     user_top.geometry('%dx%d+%d+%d' % (ww, h, w-ww, 0))
+    # user_top.geometry('%dx%d' % (w, h))
     user_top.resizable(False, False) 
     user_top.wm_attributes('-topmost', 1)
     user_top.grab_set()
@@ -669,6 +676,7 @@ def delete_user():
     bg_w = video_label.winfo_width()
     ww=int(0.3*w)
     del_user_top.geometry('%dx%d+%d+%d' % (ww, h, w-ww, 0)) # +sol ust kose koordinatlari
+    # del_user_top.geometry('%dx%d' % (w, h))
     del_user_top.resizable(False, False) 
     del_user_top.wm_attributes('-topmost', 1)
     del_user_top.grab_set()
@@ -880,6 +888,7 @@ def password_register():
     bg_w = video_label.winfo_width()
     ww=int(0.3*w)
     password_top.geometry('%dx%d+%d+%d' % (ww, h, w-ww, 0))
+    # password_top.geometry('%dx%d' % (w, h))
     password_top.resizable(False, False) 
     password_top.wm_attributes('-topmost', 1)
     password_top.grab_set()
@@ -999,6 +1008,8 @@ def btn_add_user_clicker(event):
         thread_check = False
         time.sleep(1)
     add_user()
+    # t_add =  threading.Thread(target=add_user)  # kontrol et
+    # t_add.start()
 def btn_delete_user_clicker(event):
     global thread_check
     global thread_stop
