@@ -62,6 +62,7 @@ def run():
     global face_locations
     global thread_stop
     global frame
+
     global frame_copy
     ret=False
     try:
@@ -101,6 +102,7 @@ def run():
     except:
         cap.release()
         pass    
+
 def run_info():
     global known_face_encondings
     global known_face_names
@@ -124,8 +126,6 @@ def run_info():
                 if next(isThere):
                     left, top, right, bottom = locations[0][0], locations[0][1], locations[0][2], locations[0][3]
                     face_locations = [(top, right, bottom, left)]
-                    # print(len(face_locations))
-
                     face_encodings = fr.face_encodings(rgb_frame, face_locations)
                     try:
                         for face_encoding in face_encodings:
@@ -140,6 +140,7 @@ def run_info():
                         print("hata: ", e)            
             except:
                 pass
+
 def quit_():
     if messagebox.askokcancel("Quit", "Do you really wish to quit?"):
         root.quit()
@@ -369,13 +370,11 @@ def add_user():
             time.sleep(1)
             warning_lbl_add_user.config(text="1")
             time.sleep(1)
-            print(top, bottom, left, right)
-            print(frame.shape)
             face_img = frame[top: bottom, left: right]
+            # cv2.imshow("face_img", face_img)
             print("88")
             try:
-                img_encoding = fr.face_encodings(face_img)[0]  # list index out of range
-                print("img_encoding: ", img_encoding)
+                img_encoding = fr.face_encodings(face_img)[0]
                 faces.append(img_encoding)
                 try:
                     os.mkdir(f"{image_path}/{latest}")
@@ -384,7 +383,6 @@ def add_user():
                 path = f"{image_path}/{latest}/{entry_name_add_user.get()}-{i}.jpeg"
                 cv2.imwrite(path, face_img)
             except Exception as e:
-                print(e)
                 warning_lbl_add_user.config(text=f"yuz bulunamadi!!aldigim error: {e}")
         check = False
         if len(faces) > 0:
@@ -400,6 +398,7 @@ def add_user():
                 entry_name_add_user.delete(0, END)
                 entry_name_add_user.configure(state=DISABLED)
                 keyboard(keyboard_lbl_add_user, entry_passw_add_user)
+
             except Exception as e:
                 print(e)
                 warning_lbl_add_user.config(text=f"yuz bilgileri eklenemedi!!! aldigim error: {e}")
@@ -416,20 +415,21 @@ def add_user():
         btn_add_user.configure(text="Enter")
         warning_lbl_add_user.configure(text="",bg=bgg)   
         password_add_user = var_password_add_user.get()
-        statee="normal"
+        btn_add_user.config(state="normal")
         if len(password_add_user) < 4:
-            statee=DISABLED
+            btn_add_user.config(state=DISABLED)
+        else:
+            btn_add_user.config(state="normal")
         if len(password_add_user) > 11:
             var_password_add_user.set(password_add_user[:12])
-        btn_add_user.config(state=statee)
     def control_name_add_user(*args):
 
         btn_add_user.configure(text="Kaydet")
         var_name = var_name_add_user.get()
         print(known_face_names)
+        print(Ids)
         textt=""
         btn_add_user.config(state=NORMAL)
-
         if len(face_locations) > 1:
             textt="kameranin karsisinda birden fazla kisi bulunmamalidir"
             btn_add_user.config(state=DISABLED)
@@ -462,10 +462,11 @@ def add_user():
         if entry_passw_add_user.get() == password and len(entry_name_add_user.get())>3:
             add_userr()
 
+
     global name
     global Ids
     global check
-    global frame_copy
+    global frame
     global known_face_encondings
     global known_face_names
     global face_locations
@@ -485,11 +486,11 @@ def add_user():
     w = frame_bg.winfo_width()
     h = frame_bg.winfo_height()
     bg_w = video_label.winfo_width()
-    ww=int(0.3*w)
+    ww=int(0.4*w)
     user_top.geometry('%dx%d+%d+%d' % (ww, h, w-ww, 0))
-    # user_top.geometry('%dx%d' % (w, h))
     user_top.resizable(False, False) 
     user_top.wm_attributes('-topmost', 1)
+    user_top.wait_visibility()  # Wait until the visibility of a WIDGET changes
     user_top.grab_set()
 
     # print(user_top.winfo_geometry())
@@ -520,7 +521,7 @@ def add_user():
     lbl_passw_add_user = Label(user_top, text="Sifrenizi Girin: ", bg=bgg, font=("bold", 15), border=0, width=25)
     lbl_passw_add_user.grid(column=0, row=0, sticky="s")
 
-    entry_passw_add_user = Entry(user_top, textvar=var_password_add_user, highlightthickness=0, border=0, show="*", disabledbackground=buttoncolor_char, width=25)
+    entry_passw_add_user = Entry(user_top, textvar=var_password_add_user, highlightthickness=0, border=0, show="*", width=25)
     entry_passw_add_user.grid(column=0, row=1)
 
     warning_lbl_passw_add_user = Label(user_top,  text="", bg=bgg, font=("bold", 15), fg=warning_color, border=0, width=50)
@@ -627,7 +628,6 @@ def delete_user():
 
         if len(warning_text)==0:  
             warning_lbl_del_user.configure(text=warning_text,bg=bgg)   
-
         else:  
             warning_lbl_del_user.configure(text=warning_text, bg="#639a67")      # renklere bak
     def control_password_del_user(*args):
@@ -645,7 +645,8 @@ def delete_user():
         else:
             btn_del_user.config(state=NORMAL)
     def control_id(*args):
-
+        print(known_face_names)
+        print(Ids)
         textt = ""
         id_del_user = var_id.get()
         if not int(id_del_user).isnumeric():  # id rakam olamaz
@@ -674,11 +675,11 @@ def delete_user():
     w = frame_bg.winfo_width()
     h = frame_bg.winfo_height()
     bg_w = video_label.winfo_width()
-    ww=int(0.3*w)
+    ww=int(0.4*w)
     del_user_top.geometry('%dx%d+%d+%d' % (ww, h, w-ww, 0)) # +sol ust kose koordinatlari
-    # del_user_top.geometry('%dx%d' % (w, h))
     del_user_top.resizable(False, False) 
     del_user_top.wm_attributes('-topmost', 1)
+    del_user_top.wait_visibility()  # Wait until the visibility of a WIDGET changes
     del_user_top.grab_set()
 
     del_user_top.columnconfigure(0, weight=1)
@@ -787,23 +788,22 @@ def password_register():
         btn_change_passw.configure(text="Enter")
         warning_lbl.configure(text="",bg=bgg)    
         password1 = var_password.get()
-        statee = NORMAL
+        btn_change_passw.config(state=NORMAL)
         if len(password1) < 4:
-            statee = DISABLED
+            btn_change_passw.config(state=DISABLED)
         if len(password1) > 11:
             var_password.set(password1[:12])
-        btn_change_passw.config(state=statee)
     def control_new_password(*args):
 
         warning_lbl.configure(text="",bg=bgg)    
         password2 = var_new_password.get()
         textt = ""
-        statee = NORMAL
+        btn_change_passw.config(state=NORMAL)
         if len(password2) == 0:
-            statee = DISABLED
+            btn_change_passw.config(state=DISABLED)
         elif len(password2) < 4:
             textt = "sifreniz cok kisa!!!"
-            statee = DISABLED
+            btn_change_passw.config(state=DISABLED)
         if len(password2) > 11:
             textt = "şifreniz daha uzun olamaz!!!"
             var_new_password.set(password2[:12])
@@ -815,12 +815,12 @@ def password_register():
         warning_lbl.configure(text="",bg=bgg)    
         password3 = var_again_new_password.get()
         textt = ""
-        statee = NORMAL
+        btn_change_passw.config(state=NORMAL)
         if len(password3) == 0:
-            statee = DISABLED
+            btn_change_passw.config(state=DISABLED)
         elif len(password3) < 4:
             textt = "şifreniz cok kisa!!!"
-            statee = DISABLED
+            btn_change_passw.config(state=DISABLED)
         if len(password3) > 11:
             textt = "şifreniz daha uzun olamaz!!!"
             var_again_new_password.set(password3[:12])
@@ -886,11 +886,11 @@ def password_register():
     w = frame_bg.winfo_width()
     h = frame_bg.winfo_height()
     bg_w = video_label.winfo_width()
-    ww=int(0.3*w)
+    ww=int(0.4*w)
     password_top.geometry('%dx%d+%d+%d' % (ww, h, w-ww, 0))
-    # password_top.geometry('%dx%d' % (w, h))
     password_top.resizable(False, False) 
     password_top.wm_attributes('-topmost', 1)
+    password_top.wait_visibility()  # Wait until the visibility of a WIDGET changes
     password_top.grab_set()
 
     password_top.columnconfigure(0, weight=1)
@@ -1008,8 +1008,6 @@ def btn_add_user_clicker(event):
         thread_check = False
         time.sleep(1)
     add_user()
-    # t_add =  threading.Thread(target=add_user)  # kontrol et
-    # t_add.start()
 def btn_delete_user_clicker(event):
     global thread_check
     global thread_stop
@@ -1081,15 +1079,6 @@ video_label.configure(image=img1)
 '''///////////////////////////////////////'''
 options_lbl = Label(content, border=0, bg="#fbc531")  # , height=int(content.winfo_height()/5)
 options_lbl.grid(column=0, row=1, sticky="nsew")
-
-# image = Image.open("orange.jpeg")
-# # print(frame_bg.winfo_width())  # 1
-# # print(frame_bg.winfo_height())
-
-# imagee = image.resize((video_label.winfo_width(), video_label.winfo_height()),Image.BICUBIC)
-# img1 = ImageTk.PhotoImage(imagee)
-# video_label.configure(image=img1)
-# video_label.image=img1
 
 options_lbl.columnconfigure(0, weight=1)
 options_lbl.columnconfigure(1, weight=1)
