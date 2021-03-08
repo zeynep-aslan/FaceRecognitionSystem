@@ -42,8 +42,8 @@ cap = cv2.VideoCapture(0)
 # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 # #cap.set(cv2.CAP_PROP_SETTINGS,0)
 '''///////////////////////////////////////'''
-frame_copy = ""
-CONFIDANCE = 0.95
+# frame_copy = ""
+CONFIDENCE = 0.95
 confidence = []
 
 def addToLabels():
@@ -92,7 +92,7 @@ def run():
                 try:
                     if confidence[0] > 0:  #  if isThereFace
                         for top, right, bottom, left in face_locations:
-                            if not check:  # buraya veya daha ustune confidance koy, 0.99 dan buyukse cizdir
+                            if not check:  # buraya veya daha ustune confidence koy, 0.99 dan buyukse cizdir
                                 cv2.rectangle(frame_copy, (left, top), (right, bottom), (0, 255, 0), 2)
                                 cv2.rectangle(frame_copy, (left, bottom - 35), (right, bottom), (0, 255, 0), cv2.FILLED)
                                 cv2.putText(frame_copy, f"{name}  {str(distance)}", (left + 4, bottom - 4),cv2.FONT_HERSHEY_SIMPLEX, .7, (255, 255, 255), 2)
@@ -156,7 +156,7 @@ def run_info():
 
                 locations, confidence = cv.detect_face(rgb_frame)
                 isThere = (True for x in confidence if float(
-                    x) > CONFIDANCE)  # generator, disa [] koyarsan ['True] doner, bu sekilde generator adresini atadik next ile ulasicaz
+                    x) > CONFIDENCE)  # generator, disa [] koyarsan ['True] doner, bu sekilde generator adresini atadik next ile ulasicaz
                 name, distance = "", ""
                 face_locations = []
                 isThereFace = next(isThere)
@@ -458,8 +458,9 @@ def add_user():
             except:
                 print("frame kirpamiyorz: ", e)    
                 pass
-            if isThereFace:
+            if isThereFace:  #  if len(faces) > 0:
                 print("yuz")
+                # print(faces)
                 try:
                     img_encoding = fr.face_encodings(face_img)[0]  #  list index out of range
                     faces.append(img_encoding)
@@ -470,6 +471,7 @@ def add_user():
                     temp += 1
                     path = f"{image_path}/{latest}/{entry_name_add_user.get()}-{temp}.jpeg"
                     cv2.imwrite(path, face_img)
+                    print("000")
                 except Exception as e:
                     print(i)
                     # print("frame kirpamiyor cunku yuz bulamadi: ", e)
@@ -587,7 +589,7 @@ def add_user():
     global left, top, right, bottom
     
     bg_add_user = "#e9eb87"
-    warning_font_color_add_user = "#8ff18c"
+    warning_font_color_add_user = "#087988"
     warning_color_add_user = "#639a67"
     btn_color_add_user = "#938274"
     close_color_add_user = "#7b5e7b"
@@ -1008,12 +1010,16 @@ def password_register():
         if entry_passw.get() == password and len(entry_new_passw.get())==0 and len(entry_again_new_passw.get())==0:
             warning_text = info_passw  #### kontrol et
             activateEntryNewPassword()
+
         elif entry_passw.get() != password and len(entry_passw.get())>0:
             warning_text = "şifre yanlış!!!"
             entry_passw.delete(0, END)
         if entry_passw.get() != entry_new_passw.get() and len(entry_new_passw.get())>3 and len(entry_new_passw.get())<13:  # 4-12
             warning_text = info_passw  #### kontrol et
             activateEntryAgainNewPassword()
+        elif entry_passw.get() == password and len(entry_new_passw.get()) < 4 and len(entry_new_passw.get()) > 0 and len(entry_again_new_passw.get())==0:
+            warning_text = "sifreniz cok kisa!!!"  ##  newwww
+            entry_new_passw.delete(0, END)
         elif entry_passw.get() == entry_new_passw.get() and len(entry_passw.get())>0:
             warning_text = "yeni şifre eski şifreyle aynı olamaz"
             entry_new_passw.delete(0, END)
@@ -1117,7 +1123,7 @@ def password_register():
     lbl_empty_add_user_g.grid(column=0, row=9, sticky="n")
     '''////////////////////////////////////////'''
 
-    warning_lbl = Label(password_top, text=f"{info_passw}", bg=bg_passw, font=("bold", 15), fg=warning_font_color_passw, border=0, width=50)
+    warning_lbl = Label(password_top, text=f"{info_passw}", bg=bg_passw, font=("bold", 14), fg=warning_font_color_passw, border=0, width=50)
     warning_lbl.grid(column=0, row=10, sticky="nsew")
 
     '''////////////////////////////////////////'''
@@ -1150,7 +1156,7 @@ def door_register():
 
 def btn_recog_clicker(event):
     global icon_left
-    global press
+    # global press
     global thread_check
     global thread_stop
     global user_top
@@ -1199,18 +1205,18 @@ def btn_delete_user_clicker(event):
         time.sleep(1)
     delete_user()
 def btn_register_password_clicker(event):
-    global thread_check
-    global thread_stop
+    # global thread_check
+    # global thread_stop
 
-    if thread_check:
-        thread_stop = True
+    # if thread_check:
+        # thread_stop = True
         # btn_recog.config(image=icon_left)
         # t_rec = threading.Thread(target=run)
         # t_run_info = threading.Thread(target=run_info)
         # t_rec.start()
         # t_run_info.start()
-        thread_check = False
-        time.sleep(1)
+        # thread_check = False
+        # time.sleep(1)
     password_register()
 
 '''///////////////////////////////////////'''
@@ -1221,7 +1227,7 @@ root.geometry("800x480")
 
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)
-press = 0
+# press = 0
 '''///////////////////////////////////////'''
 
 content = ttk.Frame(root)
@@ -1272,24 +1278,24 @@ icon_passw = icon_passw.subsample(5, 5)
 addToLabels()
 '''///////////////////////////////////////'''
 
-btn_recog = Button(options_lbl, image=icon_recog, justify="center", border=0, bg="#7bed9f", highlightthickness=0)
+btn_recog = Button(options_lbl, image=icon_recog, justify="center", border=0, bg="#d88c9a", highlightthickness=0)
 btn_recog.bind("<Button-1>", btn_recog_clicker)
 btn_recog.grid(column=0, row=0, sticky="nsew")
 
-btn_user_add = Button(options_lbl, image=icon_add, justify="center", border=0, bg="#70a1ff", highlightthickness=0)
+btn_user_add = Button(options_lbl, image=icon_add, justify="center", border=0, bg="#f2d0a9", highlightthickness=0)
 btn_user_add.bind("<Button-1>", btn_add_user_clicker)
 btn_user_add.grid(column=1, row=0, sticky="nsew")
 
-btn_user_delete = Button(options_lbl, image=icon_delete, justify="center", border=0, bg="#B33771",
+btn_user_delete = Button(options_lbl, image=icon_delete, justify="center", border=0, bg="#f1e3d3",
                          highlightthickness=0)  # , command=delete_user
 btn_user_delete.bind("<Button-1>", btn_delete_user_clicker)
 btn_user_delete.grid(column=2, row=0, sticky="nsew")
 
-btn_door = Button(options_lbl, image=icon_door, justify="center", border=0, bg="#a4b0be", highlightthickness=0,
+btn_door = Button(options_lbl, image=icon_door, justify="center", border=0, bg="#99c1b9", highlightthickness=0,
                   command=door_register)
 btn_door.grid(column=3, row=0, sticky="nsew")
 
-btn_passw = Button(options_lbl, image=icon_passw, justify="center", border=0, bg="#A75454", highlightthickness=0)
+btn_passw = Button(options_lbl, image=icon_passw, justify="center", border=0, bg="#8e7dbe", highlightthickness=0)
 btn_passw.bind("<Button-1>", btn_register_password_clicker)
 
 btn_passw.grid(column=4, row=0, sticky="nsew")
