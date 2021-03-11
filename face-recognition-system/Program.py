@@ -13,6 +13,7 @@ import os
 import shutil
 from collections import OrderedDict
 import cvlib as cv
+import RPi.GPIO as GPIO
 
 known_face_encondings = []
 known_face_names = []
@@ -29,20 +30,20 @@ thread_stop = False
 img_path = "icons"
 '''///////////////////////////////////////'''
 cap = cv2.VideoCapture(0)
-
+# fps = cap.get(cv2.CAP_PROP_FPS)
+# print("fps: ", fps)
 # cap = cv2.VideoCapture(1+cv2.CAP_DSHOW)
 # cap.set(cv2.CAP_PROP_SETTINGS,1)
 
 # cap = cv2.VideoCapture(0+cv2.CAP_DSHOW)
 # #cap.set(cv2.CAP_PROP_SETTINGS,0)
 # codec = 0x47504A4D  # MJPG
-# cap.set(cv2.CAP_PROP_FPS, 30.0)
+# cap.set(cv2.CAP_PROP_FPS, 60.0)
 # cap.set(cv2.CAP_PROP_FOURCC, codec)
-# cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-# cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+# cap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)  # frame buyuklugu
+# cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
 # #cap.set(cv2.CAP_PROP_SETTINGS,0)
 '''///////////////////////////////////////'''
-# frame_copy = ""
 CONFIDENCE = 0.95
 confidence = []
 
@@ -76,13 +77,16 @@ def run():
     global thread_stop
     global frame
     global confidence
-    # global frame_copy
     ret = False
     try:
         global cap
         global tkimage1
         while root.winfo_exists() and thread_stop:
+            # fps = cap.get(cv2.CAP_PROP_FPS)
+            # print("fps: ", fps)
             ret, frame_ = cap.read()
+            # h,w,kanalS=frame_.shape
+            # print("h, w : ", h, w)
             if ret:
                 frame = cv2.flip(frame_, 1)
                 frame_copy = frame.copy()
@@ -102,21 +106,30 @@ def run():
                     # cv2.putText(frame_copy, "lutfen bekleyinnnn", (int(w / 10), int(2 * h / 3)),
                     #             cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 0, 255), 3)
                     isThereLogo = True            
-                    logo = PhotoImage(file=f"{img_path}/black_blu_2.png")
-                    video_label.configure(image=logo)
-                    video_label.image = logo
+                    # break
+                    # isThereLogo = True            
+                    # logo = PhotoImage(file=f"{img_path}/black_blu_2.png")
+                    # video_label.configure(image=logo)
+                    # video_label.image = logo
                 '''///////////////////////////////////////'''
                 new_rgb_frame = frame_copy
                 new_rgb_frame = new_rgb_frame[:, :, ::-1]
                 img = Image.fromarray(new_rgb_frame)
-                img = img.resize((video_label.winfo_width(), video_label.winfo_height()), Image.BICUBIC)
+                # img = img.resize((video_label.winfo_width(), video_label.winfo_height()), Image.BICUBIC)
                 # print(frame_bg.winfo_width(), frame_bg.winfo_height())
                 if thread_stop and not isThereLogo:
                     tkimage1 = ImageTk.PhotoImage(img)
                     video_label.configure(image=tkimage1)
                     video_label.image = tkimage1
+                if isThereLogo:
+                    logo = PhotoImage(file=f"{img_path}/black_blu_2.png")
+                    video_label.configure(image=logo)
+                    video_label.image = logo    
             elif root.winfo_exists():
                 cap = cv2.VideoCapture(0)
+                # cap.set(cv2.CAP_PROP_FPS, 60.0)
+                # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)  # frame buyuklugu
+                # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
                 # cap = cv2.VideoCapture(1+cv2.CAP_DSHOW)
                 # cap.set(cv2.CAP_PROP_SETTINGS,1)
 
@@ -129,12 +142,24 @@ def run():
                 # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
             if root.winfo_exists():
                 root.update()
+        # isThereLogo = True            
+        # logo = PhotoImage(file=f"{img_path}/black_blu_2.png")
+        # video_label.configure(image=logo)
+        # video_label.image = logo
         if not thread_stop:
+            # isThereLogo = True            
+            # logo = PhotoImage(file=f"{img_path}/black_blu_2.png")
+            # video_label.configure(image=logo)
+            # video_label.image = logo
             cap.release()
     except:
         cap.release()
-        pass
 
+# start_info = time.time()
+# current_info = 0
+
+timee = time.time()
+per_frame = 0
 def run_info():
     global known_face_encondings
     global known_face_names
@@ -142,38 +167,61 @@ def run_info():
     global face_locations
     global thread_stop
     global frame
-    # global frame_copy
     global distance
     global ret
     global left, top, right, bottom
     global confidence
     global isThereFace
+    global current_info
+    global per_frame
 
+    # current_info += time.time()
     while thread_stop:
         if ret:
             try:
+                # start = datetime.now()
                 rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-                locations, confidence = cv.detect_face(rgb_frame)
+                # nw = start - datetime.now()
+                # print(nw)
+                locations, confidence = cv.detect_face(rgb_frame)  #  baya sure harciyor, 0.05 sure
                 isThere = (True for x in confidence if float(
-                    x) > CONFIDENCE)  # generator, disa [] koyarsan ['True] doner, bu sekilde generator adresini atadik next ile ulasicaz
+                    x) > CONFIDENCE)  # generator, disa [] koyarsan ['True'] doner, bu sekilde generator adresini atadik next ile ulasicaz
                 name, distance = "", ""
                 face_locations = []
                 isThereFace = next(isThere)
                 if isThereFace:
+                    #  buraya her girdiginde 
+                    # saniyede kaç kere lokasyon bulma işlemini yapıyoruz
+                    # end_info = start_info - current_info
+                    # print("end_info: ", end_info)  #  -9.435208082199097
+
+                    # per_frame += 1
+                    # print("per_frame/timee : ", per_frame/timee)
+
                     left, top, right, bottom = locations[0][0], locations[0][1], locations[0][2], locations[0][3]
                     face_locations = [(top, right, bottom, left)]
-                    face_encodings = fr.face_encodings(rgb_frame, face_locations)
+                    face_encodings = fr.face_encodings(rgb_frame, face_locations)  # vakit aliyon sen de
                     try:
                         for face_encoding in face_encodings:
-                            matches = fr.compare_faces(known_face_encondings, face_encoding, TOLERANCE)
+                            # matches = fr.compare_faces(known_face_encondings, face_encoding, TOLERANCE)
                             face_distances = fr.face_distance(known_face_encondings, face_encoding)
-                            if len(face_distances) > 0:
-                                best_match_index = np.argmin(face_distances)
-                                match = matches[best_match_index]
-                                if match:
-                                    name = known_face_names[best_match_index]
-                                    distance = format(face_distances[best_match_index], ".3f")
+                            # print(face_distances)
+                            enKucuk = 1
+                            for index, face_distance in enumerate(face_distances):
+                                if face_distance < TOLERANCE:
+                                    if face_distance < enKucuk:
+                                        enKucuk = face_distance
+                                        best_match_index = index
+                            if enKucuk != 1:
+                                name = known_face_names[best_match_index]
+                                distance = format(face_distances[best_match_index], ".3f")                
+
+                            # if len(face_distances) > 0:
+                            #     best_match_index = np.argmin(face_distances)
+                            #     match = matches[best_match_index]
+                            #     if match:
+                            #         name = known_face_names[best_match_index]
+                            #         distance = format(face_distances[best_match_index], ".3f")
                     except Exception as e:
                         print("hata: ", e)
             except:
@@ -486,7 +534,7 @@ def add_user():
                 for i in faces:
                     known_face_names.append(entry_name_add_user.get())
                 lbl_info_add_user.config(text=f"kullanici basariyla eklendi, id bilgisi: {latest}", bg=warning_color_add_user)
-                # time.sleep(1)  # label in text ine yazdirmiyor
+                time.sleep(.5)  # label in text ine yazdirmiyor
                 entry_passw_add_user.configure(state=NORMAL)
                 entry_passw_add_user.delete(0, END)
                 entry_name_add_user.delete(0, END)
@@ -495,8 +543,10 @@ def add_user():
             except Exception as e:
                 print("len(faces) kismi: ", e)
                 lbl_info_add_user.config(text=f"yuz bilgileri eklenemedi!!! aldigim error: {e}", bg=warning_color_add_user)
+                time.sleep(.5)
         else:
             lbl_info_add_user.config(text="yuz bilgileri eklenemedi!!", bg=warning_color_add_user)
+            time.sleep(.5)
             temp = 0
             try:
                 shutil.rmtree(f"{image_path}/{latest}")
@@ -555,7 +605,7 @@ def add_user():
         else:  lbl_info_add_user.configure(text=textt, bg=warning_color_add_user)  # buna veya bi ustundekine gerek yok 
     def btn_add_user_clicker(event):
         global isCorrectName
-        
+
         parser = ConfigParser()
         file = "config.ini"
         parser.read(file)
@@ -571,12 +621,14 @@ def add_user():
         elif isCorrectName and entry_passw_add_user.get() == password and len(entry_name_add_user.get()) > 3:
             t3 = threading.Thread(target=add_userr)
             t3.start()
+            return None  # fonksiyondan cikmasi lazim
         elif entry_passw_add_user.get() == password and len(entry_name_add_user.get()) > 3:
             entry_name_add_user.delete(0, END)
         elif entry_passw_add_user.get() == password and len(entry_name_add_user.get()) <= 3:
             warning_text = "isim çok kısa!!!"
             entry_name_add_user.delete(0, END)
-        if warning_text == info_add:  lbl_info_add_user.configure(text=warning_text,bg=bg_add_user)    
+        if isCorrectName and entry_passw_add_user.get() == password and len(entry_name_add_user.get()) > 3:  pass  
+        elif warning_text == info_add:  lbl_info_add_user.configure(text=warning_text,bg=bg_add_user)    
         else:  lbl_info_add_user.configure(text=warning_text,bg=warning_color_add_user)  # buna veya bi ustundekine gerek yok 
 
     global name
@@ -587,17 +639,15 @@ def add_user():
     global known_face_names
     global face_locations
     global left, top, right, bottom
-    
+    global isCorrectName
+    isCorrectName = False
+
     bg_add_user = "#e9eb87"
     warning_font_color_add_user = "#087988"
     warning_color_add_user = "#639a67"
     btn_color_add_user = "#938274"
     close_color_add_user = "#7b5e7b"
     font_add_user = "Helvetica 20"
-
-    # warning_font_color_del_user = "#14bdeb"
-    # warning_color_del_user = "#639a67"
-
 
     user_top = Toplevel(background=bg_add_user)
     user_top.overrideredirect(True)
@@ -664,7 +714,7 @@ def add_user():
                                       width=25)
     lbl_empty_add_user_n.grid(column=0, row=6, sticky="n")
 
-    lbl_info_add_user = Label(user_top, text=f"{info_add}", width=50, fg=warning_font_color_add_user, bg=bg_add_user, font=("bold", 15), border=0)
+    lbl_info_add_user = Label(user_top, text=f"{info_add}", width=50, fg=warning_font_color_add_user, bg=bg_add_user, font=("bold", 13), border=0)
     lbl_info_add_user.grid(column=0, row=7, sticky="nsew")
     '''///////////////////////////////////////'''
     lbl_empty_add_user_ = Label(user_top, bg=bg_add_user, border=0, width=25)
@@ -700,13 +750,17 @@ def delete_user():
         entry_passw_del_user.delete(len(entry_passw_del_user.get()) - 1, END)
         entry_id_del_user.delete(len(entry_id_del_user.get()) - 1, END)
     def delete_userr(iddd):
+        # global name
+
         try:
             path = f"{image_path}/{iddd}"
             shutil.rmtree(path)
-
+            print(name)
             lbl_info_del_user.configure(
                 text=f"{name} kullanıcısı silindi", bg=warning_color_del_user)
+            time.sleep(.5)    
             # addToLabels()
+            # time.sleep(.5)
             t5 = threading.Thread(target=addToLabels)
             t5.start()
             entry_passw_del_user.configure(state=NORMAL)
@@ -717,6 +771,7 @@ def delete_user():
             keyboard(keyboard_lbl_del_user, entry_passw_del_user)
         except Exception as e:
             lbl_info_del_user.configure(text="kullanıcısı silinemedi", bg=warning_color_del_user)
+            time.sleep(.5)
     def activateEntryId():
 
         entry_passw_del_user.configure(state=DISABLED)
@@ -731,7 +786,8 @@ def delete_user():
         elif entry_passw_del_user.get() == password:
             if len(face_locations) > 1:
                 lbl_info_del_user.configure(text="kamera karşısında bir kişi olmalı!!!", bg=warning_color_del_user)
-
+            elif entry_passw_del_user['state'] == "normal":
+                lbl_info_del_user.configure(text="şifre girin!!!", bg=warning_color_del_user)
             elif len(face_locations) == 1:
 
                 if len(known_face_names) == 0:
@@ -804,7 +860,7 @@ def delete_user():
     global Ids
     global face_locations
     global known_face_names
-    global name
+    # global name
 
     text1 = "* sabit durunuz *"
 
@@ -894,7 +950,7 @@ def delete_user():
     lbl_empty_del_user2 = Label(lbl_cam_del_user, bg=bg_del_user, border=0, width=10)
     lbl_empty_del_user2.grid(column=0, row=1)
 
-    lbl_info_del_user = Label(lbl_cam_del_user, text=text1, bg=bg_del_user, font=("bold", 15), fg=warning_font_color_del_user,
+    lbl_info_del_user = Label(lbl_cam_del_user, text=text1, bg=bg_del_user, font=("bold", 13), fg=warning_font_color_del_user,
                               border=0, width=40)
     lbl_info_del_user.grid(column=0, row=2, sticky="s")
 
@@ -936,6 +992,7 @@ def password_register():
     def activateEntryNewPassword():
         entry_passw.configure(state=DISABLED)
         entry_new_passw.configure(state=NORMAL)
+        entry_again_new_passw.configure(state=DISABLED)
         keyboard(keyboard_lbl, entry_new_passw)
     def activateEntryAgainNewPassword():
         entry_new_passw.configure(state=DISABLED)
@@ -1152,11 +1209,28 @@ def password_register():
     btn_change_passw.bind("<Button-1>", btn_change_password_clicker)
 
 def door_register():
-    pass
+    global known_face_names
+    global name
 
+    def on_led():
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
+        GPIO.setup(12,GPIO.OUT)
+        print("LED on")
+        GPIO.output(12,GPIO.HIGH)
+        time.sleep(10)
+        print("LED off")
+        GPIO.output(12,GPIO.LOW)
+
+    name_list = []
+    name_list = list(OrderedDict.fromkeys(known_face_names))
+    for nme in name_list:
+        if nme == name:
+            t_door = threading.Thread(target=on_led)
+            t_door.start()
+            
 def btn_recog_clicker(event):
     global icon_left
-    # global press
     global thread_check
     global thread_stop
     global user_top
@@ -1205,19 +1279,24 @@ def btn_delete_user_clicker(event):
         time.sleep(1)
     delete_user()
 def btn_register_password_clicker(event):
-    # global thread_check
-    # global thread_stop
-
-    # if thread_check:
-        # thread_stop = True
-        # btn_recog.config(image=icon_left)
-        # t_rec = threading.Thread(target=run)
-        # t_run_info = threading.Thread(target=run_info)
-        # t_rec.start()
-        # t_run_info.start()
-        # thread_check = False
-        # time.sleep(1)
     password_register()
+
+def btn_door_register_clicker(event):
+    global thread_check
+    global thread_stop
+
+    if thread_check:
+        thread_stop = True
+        btn_recog.config(image=icon_left)
+        t_rec = threading.Thread(target=run)
+        t_run_info = threading.Thread(target=run_info)
+        t_rec.start()
+        t_run_info.start()
+        thread_check = False
+        time.sleep(1)
+    # t_door = threading.Thread(target=door_register)
+    # t_door.start()
+    door_register()
 
 '''///////////////////////////////////////'''
 root = Tk()
@@ -1227,7 +1306,6 @@ root.geometry("800x480")
 
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)
-# press = 0
 '''///////////////////////////////////////'''
 
 content = ttk.Frame(root)
@@ -1240,7 +1318,7 @@ content.rowconfigure(1, weight=1)
 frame_bg = Label(content, border=0, bg="#f7f7f7")
 frame_bg.grid(column=0, row=0, sticky=("nsew"))
 
-video_label = Label(frame_bg, border=0, bg="#8d3f76")
+video_label = Label(frame_bg, border=0, bg="#8d3f76", width=800, height=385)
 video_label.grid(column=0, row=0, sticky=("nsew"))  ##
 image = Image.open(f"{img_path}/black_blu_2.png")
 img1 = ImageTk.PhotoImage(image)
@@ -1287,12 +1365,12 @@ btn_user_add.bind("<Button-1>", btn_add_user_clicker)
 btn_user_add.grid(column=1, row=0, sticky="nsew")
 
 btn_user_delete = Button(options_lbl, image=icon_delete, justify="center", border=0, bg="#f1e3d3",
-                         highlightthickness=0)  # , command=delete_user
+                         highlightthickness=0)
 btn_user_delete.bind("<Button-1>", btn_delete_user_clicker)
 btn_user_delete.grid(column=2, row=0, sticky="nsew")
 
-btn_door = Button(options_lbl, image=icon_door, justify="center", border=0, bg="#99c1b9", highlightthickness=0,
-                  command=door_register)
+btn_door = Button(options_lbl, image=icon_door, justify="center", border=0, bg="#99c1b9", highlightthickness=0)
+btn_door.bind("<Button-1>", btn_door_register_clicker)
 btn_door.grid(column=3, row=0, sticky="nsew")
 
 btn_passw = Button(options_lbl, image=icon_passw, justify="center", border=0, bg="#8e7dbe", highlightthickness=0)
