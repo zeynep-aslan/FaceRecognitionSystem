@@ -158,8 +158,8 @@ def run():
 # start_info = time.time()
 # current_info = 0
 
-timee = time.time()
-per_frame = 0
+# timee = time.time()
+# per_frame = 0
 def run_info():
     global known_face_encondings
     global known_face_names
@@ -505,7 +505,6 @@ def add_user():
                 print("top, bottom, left, right:::: ", top, bottom, left, right)
             except:
                 print("frame kirpamiyorz: ", e)    
-                pass
             if isThereFace:  #  if len(faces) > 0:
                 print("yuz")
                 # print(faces)
@@ -524,7 +523,6 @@ def add_user():
                     print(i)
                     # print("frame kirpamiyor cunku yuz bulamadi: ", e)
                     print(e)        
-                    pass
                     # warning_lbl_add_user.config(text=f"yuz bulunamadi!!aldigim error: {e}")
         check = False
         if len(faces) > 1:  #  if len(faces) > 0:  idi
@@ -533,12 +531,13 @@ def add_user():
                 Ids.append(str(latest))
                 for i in faces:
                     known_face_names.append(entry_name_add_user.get())
-                lbl_info_add_user.config(text=f"kullanici basariyla eklendi, id bilgisi: {latest}", bg=warning_color_add_user)
-                time.sleep(.5)  # label in text ine yazdirmiyor
                 entry_passw_add_user.configure(state=NORMAL)
                 entry_passw_add_user.delete(0, END)
                 entry_name_add_user.delete(0, END)
-                entry_name_add_user.configure(state=DISABLED)
+                entry_name_add_user.configure(state=DISABLED)    
+                lbl_info_add_user.config(text=f"kullanici basariyla eklendi, id bilgisi: {latest}", bg=warning_color_add_user)
+                time.sleep(.5)  # label in text ine yazdirmiyor
+
                 keyboard(keyboard_lbl_add_user, entry_passw_add_user)
             except Exception as e:
                 print("len(faces) kismi: ", e)
@@ -714,7 +713,7 @@ def add_user():
                                       width=25)
     lbl_empty_add_user_n.grid(column=0, row=6, sticky="n")
 
-    lbl_info_add_user = Label(user_top, text=f"{info_add}", width=50, fg=warning_font_color_add_user, bg=bg_add_user, font=("bold", 13), border=0)
+    lbl_info_add_user = Label(user_top, text=f"{info_add}", width=50, fg=warning_font_color_add_user, bg=bg_add_user, font=("bold", 11), border=0)
     lbl_info_add_user.grid(column=0, row=7, sticky="nsew")
     '''///////////////////////////////////////'''
     lbl_empty_add_user_ = Label(user_top, bg=bg_add_user, border=0, width=25)
@@ -744,7 +743,6 @@ def add_user():
                           font=font_add_user)
     btn_add_user.grid(column=2, row=0, sticky="nsew")
     btn_add_user.bind("<Button-1>", btn_add_user_clicker)
-
 def delete_user():
     def delete_char_del_user():
         entry_passw_del_user.delete(len(entry_passw_del_user.get()) - 1, END)
@@ -982,7 +980,6 @@ def delete_user():
                           font="Helvetica 20")
     btn_del_user.grid(column=2, row=0, sticky="nsew")
     btn_del_user.bind("<Button-1>", btn_del_user_clicker)
-
 def password_register():
         
     def delete_char():
@@ -1208,26 +1205,40 @@ def password_register():
     btn_change_passw.grid(column=2, row=0, sticky="nsew")
     btn_change_passw.bind("<Button-1>", btn_change_password_clicker)
 
+isOpen = False
+isClick = True
 def door_register():
     global known_face_names
     global name
+    global isOpen
+    global isClick
+
+    # isOpen = False
 
     def on_led():
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setwarnings(False)
-        GPIO.setup(12,GPIO.OUT)
-        print("LED on")
-        GPIO.output(12,GPIO.HIGH)
-        time.sleep(10)
-        print("LED off")
-        GPIO.output(12,GPIO.LOW)
+        if isClick:
+            isClick = False
+            GPIO.setmode(GPIO.BCM)
+            GPIO.setwarnings(False)
+            GPIO.setup(12,GPIO.OUT)
+            print("LED on")
+            GPIO.output(12,GPIO.HIGH)
+            time.sleep(10)
+            print("LED off")
+            GPIO.output(12,GPIO.LOW)
+            isClick = True
+        else:
+                
 
     name_list = []
     name_list = list(OrderedDict.fromkeys(known_face_names))
     for nme in name_list:
         if nme == name:
-            t_door = threading.Thread(target=on_led)
-            t_door.start()
+            if not isOpen:
+                isOpen = True
+                t_door = threading.Thread(target=on_led)
+                t_door.start()
+                isOpen = False
             
 def btn_recog_clicker(event):
     global icon_left
@@ -1281,27 +1292,44 @@ def btn_delete_user_clicker(event):
 def btn_register_password_clicker(event):
     password_register()
 
+temp = True
 def btn_door_register_clicker(event):
     global thread_check
     global thread_stop
+    global temp
+    global isOpen
+    # temp = True
 
     if thread_check:
         thread_stop = True
+        temp = False
+        thread_check = False
         btn_recog.config(image=icon_left)
         t_rec = threading.Thread(target=run)
         t_run_info = threading.Thread(target=run_info)
         t_rec.start()
         t_run_info.start()
-        thread_check = False
         time.sleep(1)
-    # t_door = threading.Thread(target=door_register)
-    # t_door.start()
-    door_register()
+        door_register()
+        isOpen = False
+        temp = True
+    elif not thread_check and temp:
+        temp = False
+        door_register()
+        isOpen = False
+        temp = True
+
+    # else:
+    #     if temp == True:
+    #         door_register()
+    #     else:
+
+
 
 '''///////////////////////////////////////'''
 root = Tk()
 root.geometry("800x480")
-# root.wm_attributes('-fullscreen', 'true')
+root.wm_attributes('-fullscreen', 'true')
 # root.wm_attributes('-topmost', 1)
 
 root.columnconfigure(0, weight=1)
